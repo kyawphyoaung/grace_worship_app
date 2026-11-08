@@ -31,7 +31,7 @@ export default async function AppLayout({
 
   if (!linked) {
     return (
-      <div className="min-h-svh bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background">
+      <div className="min-h-svh bg-background">
         <div className="flex items-center justify-end gap-2 p-4">
           <LanguageToggle userId={user.id} language={language} />
           <LogoutButton label={t("auth.logout", language)} />

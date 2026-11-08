@@ -16,10 +16,10 @@ export function AppShell({
   displayName: string | null;
 }) {
   return (
-    <div className="flex min-h-svh bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background">
+    <div className="flex min-h-svh bg-background">
       <Sidebar language={language} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border/60 bg-background/80 px-4 py-3 backdrop-blur md:px-8">
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border/80 bg-background/90 px-4 py-3 backdrop-blur md:px-8">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-primary md:hidden">
               {t("appName", language)}

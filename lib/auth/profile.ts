@@ -64,3 +64,17 @@ export async function isPartnerLinked(
 export function profileLanguage(profile: Profile | null): Language {
   return profile?.preferred_language === "mm" ? "mm" : "en";
 }
+
+export async function getPartnerUserId(
+  supabase: SupabaseServer,
+  userId: string,
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("partners")
+    .select("user_a, user_b")
+    .or(`user_a.eq.${userId},user_b.eq.${userId}`)
+    .maybeSingle();
+
+  if (!data) return null;
+  return data.user_a === userId ? data.user_b : data.user_a;
+}

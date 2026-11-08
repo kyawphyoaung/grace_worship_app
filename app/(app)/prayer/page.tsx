@@ -1,10 +1,13 @@
+import { PrayerSection } from "@/components/prayer/prayer-section";
 import {
   ensureProfile,
   getCurrentUser,
+  getPartnerUserId,
   profileLanguage,
 } from "@/lib/auth/profile";
-import { t } from "@/lib/i18n";
 import { redirect } from "next/navigation";
+
+export const instant = false;
 
 export default async function PrayerPage() {
   const { supabase, user } = await getCurrentUser();
@@ -12,18 +15,34 @@ export default async function PrayerPage() {
 
   const profile = await ensureProfile(supabase, user.id, user.email);
   const language = profileLanguage(profile);
+  const partnerId = await getPartnerUserId(supabase, user.id);
+
+  const [{ data: prayers }, { data: interactions }, { data: gratitude }] =
+    await Promise.all([
+      supabase
+        .from("prayers")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("prayer_interactions")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("gratitude_entries")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("entry_date", { ascending: false }),
+    ]);
 
   return (
-    <section className="mx-auto max-w-2xl space-y-3">
-      <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-        {t("nav.prayer", language)}
-      </h1>
-      <p className="text-base leading-relaxed text-muted-foreground">
-        {t("stubs.prayer", language)}
-      </p>
-      <p className="text-sm text-muted-foreground">
-        {t("stubs.comingSoon", language)}
-      </p>
-    </section>
+    <PrayerSection
+      language={language}
+      userId={user.id}
+      partnerId={partnerId}
+      prayers={prayers ?? []}
+      interactions={interactions ?? []}
+      reminderTime={profile?.prayer_reminder_time ?? null}
+      gratitudeEntries={gratitude ?? []}
+    />
   );
 }

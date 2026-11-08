@@ -54,10 +54,12 @@ export function LoginForm({
           Grace
         </p>
       </div>
-      <Card className="border-border/70 shadow-sm">
+      <Card className="border-border/70 bg-card shadow-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
-          <CardDescription>Sign in to continue to Grace</CardDescription>
+          <CardTitle className="text-2xl text-foreground">Welcome back</CardTitle>
+          <CardDescription className="text-muted-foreground">
+            Sign in to continue to Grace
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin}>
@@ -70,7 +72,7 @@ export function LoginForm({
                   placeholder="you@example.com"
                   required
                   autoComplete="email"
-                  className="min-h-11"
+                  className="min-h-11 bg-background"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -80,7 +82,7 @@ export function LoginForm({
                   <Label htmlFor="password">Password</Label>
                   <Link
                     href="/auth/forgot-password"
-                    className="ml-auto inline-block min-h-11 content-center text-sm underline-offset-4 hover:underline"
+                    className="ml-auto inline-block min-h-11 content-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
                   >
                     Forgot your password?
                   </Link>
@@ -90,7 +92,7 @@ export function LoginForm({
                   type="password"
                   required
                   autoComplete="current-password"
-                  className="min-h-11"
+                  className="min-h-11 bg-background"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />

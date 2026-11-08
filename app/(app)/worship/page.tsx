@@ -6,6 +6,8 @@ import {
 import { t } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 
+export const instant = false;
+
 export default async function WorshipPage() {
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/auth/login");
