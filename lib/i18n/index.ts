@@ -34,3 +34,16 @@ export function t(key: StringKey, lang: Language): string {
   const leaf = getLeaf(key);
   return leaf[lang];
 }
+
+/** Replace `{name}` (and other `{key}`) placeholders in an i18n string. */
+export function tf(
+  key: StringKey,
+  lang: Language,
+  vars: Record<string, string>,
+): string {
+  let out = t(key, lang);
+  for (const [k, v] of Object.entries(vars)) {
+    out = out.replaceAll(`{${k}}`, v);
+  }
+  return out;
+}

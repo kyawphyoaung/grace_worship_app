@@ -41,6 +41,53 @@ export type Database = {
         }
         Relationships: []
       }
+      bible_favorites: {
+        Row: {
+          book_id: string
+          chapter: number
+          created_at: string
+          highlighted_text: string | null
+          id: string
+          is_shared: boolean
+          kind: string
+          user_id: string
+          verse: number
+          verse_end: number | null
+        }
+        Insert: {
+          book_id: string
+          chapter: number
+          created_at?: string
+          highlighted_text?: string | null
+          id?: string
+          is_shared?: boolean
+          kind: string
+          user_id: string
+          verse: number
+          verse_end?: number | null
+        }
+        Update: {
+          book_id?: string
+          chapter?: number
+          created_at?: string
+          highlighted_text?: string | null
+          id?: string
+          is_shared?: boolean
+          kind?: string
+          user_id?: string
+          verse?: number
+          verse_end?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bible_favorites_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "bible_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bible_study_notes: {
         Row: {
           book_id: string

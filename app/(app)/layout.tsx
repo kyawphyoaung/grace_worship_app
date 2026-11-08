@@ -6,12 +6,12 @@ import { LogoutButton } from "@/components/logout-button";
 import {
   ensureProfile,
   getCurrentUser,
+  getPartnerUserId,
   isPartnerLinked,
   profileLanguage,
 } from "@/lib/auth/profile";
 import { t } from "@/lib/i18n";
 
-// Auth-gated shell reads cookies/session on every request.
 export const instant = false;
 
 export default async function AppLayout({
@@ -26,6 +26,10 @@ export default async function AppLayout({
   }
 
   const profile = await ensureProfile(supabase, user.id, user.email);
+  if (!profile) {
+    redirect("/auth/login");
+  }
+
   const language = profileLanguage(profile);
   const linked = await isPartnerLinked(supabase, user.id);
 
@@ -41,12 +45,25 @@ export default async function AppLayout({
     );
   }
 
+  const partnerId = await getPartnerUserId(supabase, user.id);
+  const { data: partnerProfile } = partnerId
+    ? await supabase.from("profiles").select("*").eq("id", partnerId).maybeSingle()
+    : { data: null };
+
+  if (!partnerProfile) {
+    return (
+      <div className="min-h-svh bg-background">
+        <div className="flex items-center justify-end gap-2 p-4">
+          <LanguageToggle userId={user.id} language={language} />
+          <LogoutButton label={t("auth.logout", language)} />
+        </div>
+        <PartnerGate language={language} />
+      </div>
+    );
+  }
+
   return (
-    <AppShell
-      language={language}
-      userId={user.id}
-      displayName={profile?.display_name ?? null}
-    >
+    <AppShell language={language} me={profile} partner={partnerProfile}>
       {children}
     </AppShell>
   );

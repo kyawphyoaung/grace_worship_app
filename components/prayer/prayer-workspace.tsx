@@ -4,12 +4,14 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
-import { t, type Language } from "@/lib/i18n";
+import { t, tf, type Language } from "@/lib/i18n";
 import { Segmented } from "@/components/ui/segmented";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useCouple } from "@/components/couple-provider";
+import { UserAvatar } from "@/components/user-avatar";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database";
 
@@ -37,6 +39,7 @@ export function PrayerWorkspace({
   mode?: "full" | "journal-only";
 }) {
   const router = useRouter();
+  const { partner, partnerName } = useCouple();
   const [pending, startTransition] = useTransition();
   const [tab, setTab] = useState<Tab>(mode === "journal-only" ? "journal" : "prayers");
   const [filter, setFilter] = useState<Filter>(
@@ -315,8 +318,18 @@ export function PrayerWorkspace({
                           : t("common.private", language)}
                       </span>
                       {partnerPrayed ? (
-                        <span className="text-primary">
-                          {t("prayer.partnerPrayed", language)}
+                        <span className="inline-flex items-center gap-1.5 text-primary">
+                          {partner ? (
+                            <UserAvatar
+                              userId={partner.id}
+                              displayName={partner.display_name}
+                              avatarUrl={partner.avatar_url}
+                              size={18}
+                            />
+                          ) : null}
+                          {tf("prayer.namePrayed", language, {
+                            name: partnerName,
+                          })}
                         </span>
                       ) : null}
                     </div>
@@ -426,7 +439,7 @@ export function PrayerWorkspace({
               checked={isShared}
               onCheckedChange={(v) => setIsShared(v === true)}
             />
-            {t("common.shareWithPartner", language)}
+            {tf("common.shareWithName", language, { name: partnerName })}
           </label>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" className="min-h-11" onClick={() => setFormOpen(false)}>

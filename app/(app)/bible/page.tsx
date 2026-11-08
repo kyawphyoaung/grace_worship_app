@@ -12,6 +12,7 @@ export const instant = false;
 
 type Note = Database["public"]["Tables"]["bible_study_notes"]["Row"];
 type Session = Database["public"]["Tables"]["bible_study_sessions"]["Row"];
+type Favorite = Database["public"]["Tables"]["bible_favorites"]["Row"];
 
 export default async function BiblePage({
   searchParams,
@@ -69,59 +70,79 @@ export default async function BiblePage({
     myNotes = notes ?? [];
   }
 
-  const { data: mySessions } = await supabase
-    .from("bible_study_sessions")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("session_date", { ascending: false });
+  const [{ data: mySessions }, { data: myFavorites }] = await Promise.all([
+    supabase
+      .from("bible_study_sessions")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("session_date", { ascending: false }),
+    supabase
+      .from("bible_favorites")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+  ]);
 
   let partnerSessions: Session[] = [];
   let partnerSharedNotes: (Note & {
     book_name_en?: string;
     book_name_mm?: string;
   })[] = [];
+  let partnerSharedFavorites: (Favorite & {
+    book_name_en?: string;
+    book_name_mm?: string;
+  })[] = [];
 
   if (partnerId) {
-    const [{ data: pSessions }, { data: pNotes }] = await Promise.all([
-      supabase
-        .from("bible_study_sessions")
-        .select("*")
-        .eq("user_id", partnerId)
-        .order("session_date", { ascending: false })
-        .limit(50),
-      supabase
-        .from("bible_study_notes")
-        .select("*, bible_books(name_en, name_mm)")
-        .eq("user_id", partnerId)
-        .eq("is_shared", true)
-        .order("created_at", { ascending: false })
-        .limit(30),
-    ]);
+    const [{ data: pSessions }, { data: pNotes }, { data: pFavs }] =
+      await Promise.all([
+        supabase
+          .from("bible_study_sessions")
+          .select("*")
+          .eq("user_id", partnerId)
+          .order("session_date", { ascending: false })
+          .limit(100),
+        supabase
+          .from("bible_study_notes")
+          .select("*, bible_books(name_en, name_mm)")
+          .eq("user_id", partnerId)
+          .eq("is_shared", true)
+          .order("created_at", { ascending: false })
+          .limit(30),
+        supabase
+          .from("bible_favorites")
+          .select("*, bible_books(name_en, name_mm)")
+          .eq("user_id", partnerId)
+          .eq("is_shared", true)
+          .order("created_at", { ascending: false })
+          .limit(30),
+      ]);
 
     partnerSessions = pSessions ?? [];
     type NoteJoin = Note & {
       bible_books: { name_en: string; name_mm: string } | null;
     };
     partnerSharedNotes = ((pNotes ?? []) as unknown as NoteJoin[]).map((n) => ({
-      id: n.id,
-      user_id: n.user_id,
-      book_id: n.book_id,
-      chapter: n.chapter,
-      verse_start: n.verse_start,
-      verse_end: n.verse_end,
-      reflection: n.reflection,
-      is_shared: n.is_shared,
-      created_at: n.created_at,
+      ...n,
       book_name_en: n.bible_books?.name_en,
       book_name_mm: n.bible_books?.name_mm,
     }));
+    type FavJoin = Favorite & {
+      bible_books: { name_en: string; name_mm: string } | null;
+    };
+    partnerSharedFavorites = ((pFavs ?? []) as unknown as FavJoin[]).map(
+      (f) => ({
+        ...f,
+        book_name_en: f.bible_books?.name_en,
+        book_name_mm: f.bible_books?.name_mm,
+      }),
+    );
   }
 
   return (
     <BibleWorkspace
       language={language}
       userId={user.id}
-      partnerId={partnerId}
       books={bookList}
       initialBookId={bookId}
       initialChapter={chapter}
@@ -131,6 +152,8 @@ export default async function BiblePage({
       mySessions={mySessions ?? []}
       partnerSessions={partnerSessions}
       partnerSharedNotes={partnerSharedNotes}
+      myFavorites={myFavorites ?? []}
+      partnerSharedFavorites={partnerSharedFavorites}
     />
   );
 }

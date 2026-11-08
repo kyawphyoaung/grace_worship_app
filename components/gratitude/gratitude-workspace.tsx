@@ -11,12 +11,13 @@ import {
   parseISO,
 } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
-import { t, type Language } from "@/lib/i18n";
+import { t, tf, type Language } from "@/lib/i18n";
 import { Segmented } from "@/components/ui/segmented";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useCouple } from "@/components/couple-provider";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database";
 
@@ -33,6 +34,7 @@ export function GratitudeWorkspace({
   entries: Entry[];
 }) {
   const router = useRouter();
+  const { partnerName } = useCouple();
   const [pending, startTransition] = useTransition();
   const [view, setView] = useState<View>("list");
   const [query, setQuery] = useState("");
@@ -297,7 +299,7 @@ export function GratitudeWorkspace({
               checked={isShared}
               onCheckedChange={(v) => setIsShared(v === true)}
             />
-            {t("common.shareWithPartner", language)}
+            {tf("common.shareWithName", language, { name: partnerName })}
           </label>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" className="min-h-11" onClick={() => setOpen(false)}>

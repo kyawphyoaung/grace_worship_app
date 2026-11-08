@@ -1,11 +1,10 @@
+import { HomeWorkspace } from "@/components/home/home-workspace";
 import {
   ensureProfile,
   getCurrentUser,
   profileLanguage,
 } from "@/lib/auth/profile";
-import { t } from "@/lib/i18n";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 
 export const instant = false;
 
@@ -16,36 +15,69 @@ export default async function HomePage() {
   const profile = await ensureProfile(supabase, user.id, user.email);
   const language = profileLanguage(profile);
 
+  const { data: myLatest } = await supabase
+    .from("bible_study_sessions")
+    .select("book_id, chapter, session_date, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let continueSession: {
+    book_id: string;
+    chapter: number;
+    session_date: string;
+  } | null = myLatest;
+
+  if (!continueSession) {
+    const { data: anyLatest } = await supabase
+      .from("bible_study_sessions")
+      .select("book_id, chapter, session_date")
+      .order("session_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    continueSession = anyLatest;
+  }
+
+  let continueBook: {
+    id: string;
+    name_en: string;
+    name_mm: string;
+  } | null = null;
+
+  if (continueSession) {
+    const { data: book } = await supabase
+      .from("bible_books")
+      .select("id, name_en, name_mm")
+      .eq("id", continueSession.book_id)
+      .maybeSingle();
+    continueBook = book;
+  }
+
+  const { data: genesis } = await supabase
+    .from("bible_books")
+    .select("id, name_en, name_mm")
+    .eq("book_order", 1)
+    .maybeSingle();
+
   return (
-    <section className="mx-auto max-w-2xl space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-          {t("nav.home", language)}
-        </h1>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          {t("stubs.home", language)}
-        </p>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Link
-          href="/bible"
-          className="min-h-20 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40"
-        >
-          <p className="font-medium text-primary">{t("nav.bible", language)}</p>
-        </Link>
-        <Link
-          href="/prayer"
-          className="min-h-20 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40"
-        >
-          <p className="font-medium text-primary">{t("nav.prayer", language)}</p>
-        </Link>
-        <Link
-          href="/worship"
-          className="min-h-20 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40"
-        >
-          <p className="font-medium text-primary">{t("nav.worship", language)}</p>
-        </Link>
-      </div>
-    </section>
+    <HomeWorkspace
+      language={language}
+      continueSession={
+        continueSession && continueBook
+          ? {
+              bookId: continueBook.id,
+              chapter: continueSession.chapter,
+              nameEn: continueBook.name_en,
+              nameMm: continueBook.name_mm,
+            }
+          : null
+      }
+      genesis={
+        genesis
+          ? { bookId: genesis.id, nameEn: genesis.name_en, nameMm: genesis.name_mm }
+          : null
+      }
+    />
   );
 }

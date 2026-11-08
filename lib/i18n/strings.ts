@@ -33,6 +33,10 @@ export const strings = {
       en: "Your account is ready. Ask the owner to link your partner in Supabase so you can share Bible study, prayer, and worship together.",
       mm: "သင့်အကောင့် အဆင်သင့်ဖြစ်ပါပြီ။ ကျမ်းစာ၊ ဆုတောင်းနှင့် ကိုးကွယ်ခြင်းကို အတူမျှဝေနိုင်ရန် ပိုင်ရှင်အား အဖော်ချိတ်ဆက်ပေးရန် တောင်းဆိုပါ။",
     },
+    switchHint: {
+      en: "Each of you signs in with your own account. No in-app switch.",
+      mm: "တစ်ဦးစီ မိမိအကောင့်ဖြင့် ဝင်ရောက်ပါ။ အက်ပ်အတွင်း ပြောင်းရန် မလိုပါ။",
+    },
   },
   language: {
     label: { en: "Language", mm: "ဘာသာစကား" },
@@ -43,10 +47,6 @@ export const strings = {
     comingSoon: {
       en: "Coming in a later phase.",
       mm: "နောက်အဆင့်တွင် ရရှိပါမည်။",
-    },
-    home: {
-      en: "Your shared home for gentle rhythms of faith.",
-      mm: "ယုံကြည်ခြင်း၏ နူးညံ့သော အလေ့အကျင့်များအတွက် သင်တို့၏ ပင်မစာမျက်နှာ။",
     },
     worship: {
       en: "Worship planning will live here.",
@@ -64,9 +64,20 @@ export const strings = {
     shared: { en: "Shared", mm: "မျှဝေထား" },
     private: { en: "Private", mm: "သီးသန့်" },
     empty: { en: "Nothing here yet.", mm: "မရှိသေးပါ။" },
-    shareWithPartner: {
-      en: "Share with partner",
-      mm: "အဖော်နှင့် မျှဝေရန်",
+    done: { en: "Done", mm: "ပြီးပြီ" },
+    shareWithName: {
+      en: "Share with {name}",
+      mm: "{name} နှင့် မျှဝေရန်",
+    },
+  },
+  home: {
+    continueReading: { en: "Continue Reading", mm: "ဆက်ဖတ်ရန်" },
+    startReading: { en: "Start reading", mm: "စတင်ဖတ်ရန်" },
+    lastRead: { en: "Last read", mm: "နောက်ဆုံးဖတ်ခဲ့" },
+    togetherFor: { en: "Together for", mm: "အတူတကွ" },
+    yearsMonthsDays: {
+      en: "{y} years, {m} months, {d} days",
+      mm: "{y} နှစ်၊ {m} လ၊ {d} ရက်",
     },
   },
   bible: {
@@ -75,9 +86,11 @@ export const strings = {
     search: { en: "Search", mm: "ရှာရန်" },
     streaks: { en: "Streaks", mm: "ဆက်တိုက်" },
     calendar: { en: "Calendar", mm: "ပြက္ခဒိန်" },
-    partner: { en: "Partner", mm: "အဖော်" },
+    partnerTab: { en: "{name}", mm: "{name}" },
+    favorites: { en: "Favorites", mm: "အသည်းစွဲများ" },
     book: { en: "Book", mm: "ကျမ်း" },
     chapter: { en: "Chapter", mm: "အခန်း" },
+    searchBooks: { en: "Search books…", mm: "ကျမ်းများ ရှာရန်…" },
     viewBoth: { en: "Both", mm: "နှစ်ဘာသာ" },
     viewMm: { en: "MM", mm: "မြန်မာ" },
     viewEn: { en: "EN", mm: "အင်္ဂလိပ်" },
@@ -100,19 +113,36 @@ export const strings = {
       mm: "သင်ရှိနေခဲ့သော နေ့များအတွက် နူးညံ့သော လက်ဆောင်။",
     },
     days: { en: "days", mm: "ရက်" },
-    partnerProgress: {
-      en: "Partner chapters read",
-      mm: "အဖော် ဖတ်ပြီးသော အခန်းများ",
+    chaptersRead: { en: "Chapters read", mm: "ဖတ်ပြီးသောအခန်းများ" },
+    chaptersReadBy: {
+      en: "Chapters {name} has read",
+      mm: "{name} ဖတ်ခဲ့ပြီးသောအခန်းများ",
     },
-    partnerNotes: {
-      en: "Shared partner notes",
-      mm: "အဖော်၏ မျှဝေမှတ်ချက်များ",
+    sharedNotesBy: {
+      en: "Shared notes from {name}",
+      mm: "{name} ၏ မျှဝေမှတ်ချက်များ",
+    },
+    sharedFavoritesBy: {
+      en: "Shared favorites from {name}",
+      mm: "{name} ၏ မျှဝေအသည်းစွဲများ",
     },
     noBooks: {
       en: "Bible data is not seeded yet. Run scripts/seed-bible.ts — see README.",
       mm: "ကျမ်းစာဒေတာ မထည့်ရသေးပါ။ README ကို ကြည့်ပြီး seed script ကို run ပါ။",
     },
     yourNotes: { en: "Your notes", mm: "သင့်မှတ်ချက်များ" },
+    highlight: { en: "Highlight", mm: "အရောင်ခြယ်" },
+    favorite: { en: "Favorite", mm: "အသည်းစွဲ" },
+    removeFavorite: { en: "Remove", mm: "ဖယ်ရှား" },
+    emptyPartner: {
+      en: "{name} hasn’t shared reading activity yet.",
+      mm: "{name} သည် ဖတ်ရှုမှု မမျှဝေရသေးပါ။",
+    },
+    emptyFavorites: {
+      en: "No favorites yet. Long-press a verse or highlight text.",
+      mm: "အသည်းစွဲများ မရှိသေးပါ။ ကျမ်းပိုဒ်ကို ကြာကြာနှိပ်ပါ သို့မဟုတ် စာသားကို အရောင်ခြယ်ပါ။",
+    },
+    last30Days: { en: "Last 30 days", mm: "နောက်ဆုံး ၃၀ ရက်" },
   },
   prayer: {
     title: { en: "Prayer", mm: "ဆုတောင်း" },
@@ -146,9 +176,9 @@ export const strings = {
       en: "Saved now. Notifications will arrive in a later phase.",
       mm: "သိမ်းပြီးပါပြီ။ အသိပေးချက်များကို နောက်အဆင့်တွင် ချိတ်ဆက်ပါမည်။",
     },
-    partnerPrayed: {
-      en: "Partner prayed",
-      mm: "အဖော် ဆုတောင်းခဲ့သည်",
+    namePrayed: {
+      en: "{name} prayed",
+      mm: "{name} ဆုတောင်းခဲ့သည်",
     },
   },
   gratitude: {
