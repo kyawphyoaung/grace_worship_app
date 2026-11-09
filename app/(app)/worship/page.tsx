@@ -1,9 +1,9 @@
+import { WorshipWorkspace } from "@/components/worship/worship-workspace";
 import {
   ensureProfile,
   getCurrentUser,
   profileLanguage,
 } from "@/lib/auth/profile";
-import { t } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 
 export const instant = false;
@@ -15,17 +15,50 @@ export default async function WorshipPage() {
   const profile = await ensureProfile(supabase, user.id, user.email);
   const language = profileLanguage(profile);
 
+  const [
+    { data: songs },
+    { data: sections },
+    { data: events },
+    { data: setlists },
+    { data: setlistItems },
+    { data: prayers },
+    { data: feedback },
+    { data: reflections },
+  ] = await Promise.all([
+    supabase.from("songs").select("*").order("updated_at", { ascending: false }),
+    supabase
+      .from("song_sections")
+      .select("*")
+      .order("section_order", { ascending: true }),
+    supabase.from("events").select("*").order("event_date", { ascending: false }),
+    supabase.from("setlists").select("*"),
+    supabase
+      .from("setlist_items")
+      .select("*")
+      .order("position", { ascending: true }),
+    supabase
+      .from("event_prayers")
+      .select("*")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("event_feedback")
+      .select("*")
+      .order("created_at", { ascending: false }),
+    supabase.from("ministry_reflections").select("*"),
+  ]);
+
   return (
-    <section className="mx-auto max-w-2xl space-y-3">
-      <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-        {t("nav.worship", language)}
-      </h1>
-      <p className="text-base leading-relaxed text-muted-foreground">
-        {t("stubs.worship", language)}
-      </p>
-      <p className="text-sm text-muted-foreground">
-        {t("stubs.comingSoon", language)}
-      </p>
-    </section>
+    <WorshipWorkspace
+      language={language}
+      userId={user.id}
+      songs={songs ?? []}
+      sections={sections ?? []}
+      events={events ?? []}
+      setlists={setlists ?? []}
+      setlistItems={setlistItems ?? []}
+      prayers={prayers ?? []}
+      feedback={feedback ?? []}
+      reflections={reflections ?? []}
+    />
   );
 }
