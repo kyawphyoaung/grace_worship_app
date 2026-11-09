@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export function Segmented<T extends string>({
@@ -9,7 +10,7 @@ export function Segmented<T extends string>({
   className,
 }: {
   value: T;
-  options: { value: T; label: string }[];
+  options: { value: T; label: ReactNode }[];
   onChange: (value: T) => void;
   className?: string;
 }) {
@@ -29,7 +30,7 @@ export function Segmented<T extends string>({
           aria-selected={value === opt.value}
           onClick={() => onChange(opt.value)}
           className={cn(
-            "min-h-11 rounded-lg px-3 text-sm font-medium transition-colors",
+            "inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors",
             value === opt.value
               ? "bg-card text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground",

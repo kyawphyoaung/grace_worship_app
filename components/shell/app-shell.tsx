@@ -7,6 +7,7 @@ import { t, type Language } from "@/lib/i18n";
 import type { Profile } from "@/lib/auth/profile";
 import { CoupleProvider } from "@/components/couple-provider";
 import { ToastProvider } from "@/components/ui/toast";
+import { resolveDisplayName } from "@/lib/display-name";
 
 export function AppShell({
   children,
@@ -19,6 +20,8 @@ export function AppShell({
   me: Profile;
   partner: Profile;
 }) {
+  const myName = resolveDisplayName(me.id, me.display_name);
+
   return (
     <CoupleProvider language={language} me={me} partner={partner}>
       <ToastProvider>
@@ -30,11 +33,7 @@ export function AppShell({
                 <p className="text-xs font-medium uppercase tracking-[0.2em] text-primary md:hidden">
                   {t("appName", language)}
                 </p>
-                {me.display_name ? (
-                  <p className="truncate text-sm text-muted-foreground">
-                    {me.display_name}
-                  </p>
-                ) : null}
+                <p className="truncate text-sm text-muted-foreground">{myName}</p>
               </div>
               <div className="flex items-center gap-2">
                 <CouplePill />

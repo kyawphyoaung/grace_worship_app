@@ -27,13 +27,19 @@ export function parseBibleReference(input: string): ParsedReference | null {
 }
 
 export function bookMatchesQuery(
-  book: { name_en: string; name_mm: string; abbreviation: string },
+  book: {
+    name_en: string;
+    name_mm: string;
+    abbreviation: string;
+    name_chin?: string | null;
+  },
   query: string,
 ): boolean {
   const q = query.toLowerCase();
   return (
     book.name_en.toLowerCase().includes(q) ||
     book.name_mm.includes(query) ||
+    (book.name_chin?.toLowerCase().includes(q) ?? false) ||
     book.abbreviation.toLowerCase() === q ||
     book.abbreviation.toLowerCase().startsWith(q)
   );

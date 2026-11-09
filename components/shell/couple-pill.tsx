@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { UserAvatar } from "@/components/user-avatar";
 import { useCouple } from "@/components/couple-provider";
 import { t } from "@/lib/i18n";
@@ -8,6 +9,11 @@ import { t } from "@/lib/i18n";
 export function CouplePill() {
   const { me, partner, myName, partnerName, language } = useCouple();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!partner) return null;
 
@@ -22,54 +28,57 @@ export function CouplePill() {
       >
         <UserAvatar
           userId={me.id}
-          displayName={me.display_name}
+          displayName={myName}
           avatarUrl={me.avatar_url}
           size={28}
         />
         <HeartMini />
         <UserAvatar
           userId={partner.id}
-          displayName={partner.display_name}
+          displayName={partnerName}
           avatarUrl={partner.avatar_url}
           size={28}
         />
       </button>
-      {open ? (
-        <>
-          <button
-            type="button"
-            className="fixed inset-0 z-40"
-            aria-label="Close"
-            onClick={() => setOpen(false)}
-          />
-          <div
-            role="dialog"
-            className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-border bg-card p-4 shadow-xl"
-          >
-            <div className="flex items-center gap-3">
-              <UserAvatar
-                userId={me.id}
-                displayName={me.display_name}
-                avatarUrl={me.avatar_url}
-                size={36}
+      {open && mounted
+        ? createPortal(
+            <>
+              <button
+                type="button"
+                className="fixed inset-0 z-40 bg-black/40"
+                aria-label="Close"
+                onClick={() => setOpen(false)}
               />
-              <p className="text-sm font-medium">{myName}</p>
-            </div>
-            <div className="my-3 flex items-center gap-3">
-              <UserAvatar
-                userId={partner.id}
-                displayName={partner.display_name}
-                avatarUrl={partner.avatar_url}
-                size={36}
-              />
-              <p className="text-sm font-medium">{partnerName}</p>
-            </div>
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              {t("partner.switchHint", language)}
-            </p>
-          </div>
-        </>
-      ) : null}
+              <div
+                role="dialog"
+                className="fixed inset-x-4 top-16 z-50 ml-auto w-full max-w-xs rounded-xl border border-border bg-card p-4 shadow-xl"
+              >
+                <div className="flex items-center gap-3">
+                  <UserAvatar
+                    userId={me.id}
+                    displayName={myName}
+                    avatarUrl={me.avatar_url}
+                    size={36}
+                  />
+                  <p className="truncate text-sm font-medium">{myName}</p>
+                </div>
+                <div className="my-3 flex items-center gap-3">
+                  <UserAvatar
+                    userId={partner.id}
+                    displayName={partnerName}
+                    avatarUrl={partner.avatar_url}
+                    size={36}
+                  />
+                  <p className="truncate text-sm font-medium">{partnerName}</p>
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {t("partner.switchHint", language)}
+                </p>
+              </div>
+            </>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

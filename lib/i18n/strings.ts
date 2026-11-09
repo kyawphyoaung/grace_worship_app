@@ -75,9 +75,14 @@ export const strings = {
     startReading: { en: "Start reading", mm: "စတင်ဖတ်ရန်" },
     lastRead: { en: "Last read", mm: "နောက်ဆုံးဖတ်ခဲ့" },
     togetherFor: { en: "Together for", mm: "အတူတကွ" },
+    daysSuffix: { en: "days", mm: "ရက်" },
     yearsMonthsDays: {
       en: "{y} years, {m} months, {d} days",
       mm: "{y} နှစ်၊ {m} လ၊ {d} ရက်",
+    },
+    monthsariesAnniversaries: {
+      en: "{m} monthsaries · {a} anniversaries",
+      mm: "လပတ်သစ် {m} ကြိမ် · နှစ်ပတ်လည် {a} ကြိမ်",
     },
   },
   bible: {
@@ -91,9 +96,11 @@ export const strings = {
     book: { en: "Book", mm: "ကျမ်း" },
     chapter: { en: "Chapter", mm: "အခန်း" },
     searchBooks: { en: "Search books…", mm: "ကျမ်းများ ရှာရန်…" },
-    viewBoth: { en: "Both", mm: "နှစ်ဘာသာ" },
     viewMm: { en: "MM", mm: "မြန်မာ" },
     viewEn: { en: "EN", mm: "အင်္ဂလိပ်" },
+    viewChin: { en: "Chin", mm: "ချင်း" },
+    language: { en: "Bible language", mm: "ကျမ်းစာဘာသာ" },
+    mmFallback: { en: "MM", mm: "မြန်မာ" },
     markRead: { en: "Mark chapter as read", mm: "အခန်းကို ဖတ်ပြီးဟုမှတ်ရန်" },
     markedRead: { en: "Chapter marked as read", mm: "ဖတ်ပြီးဟု မှတ်ပြီးပါပြီ" },
     saveNote: { en: "Save note", mm: "မှတ်ချက်သိမ်းရန်" },
@@ -114,6 +121,18 @@ export const strings = {
     },
     days: { en: "days", mm: "ရက်" },
     chaptersRead: { en: "Chapters read", mm: "ဖတ်ပြီးသောအခန်းများ" },
+    chaptersByDate: {
+      en: "Chapters you’ve read",
+      mm: "သင်ဖတ်ခဲ့သောအခန်းများ",
+    },
+    dayChapters: {
+      en: "Chapters on this day",
+      mm: "ဤနေ့၏ အခန်းများ",
+    },
+    noChaptersThatDay: {
+      en: "No chapters recorded for this day.",
+      mm: "ဤနေ့အတွက် အခန်းမှတ်တမ်း မရှိပါ။",
+    },
     chaptersReadBy: {
       en: "Chapters {name} has read",
       mm: "{name} ဖတ်ခဲ့ပြီးသောအခန်းများ",

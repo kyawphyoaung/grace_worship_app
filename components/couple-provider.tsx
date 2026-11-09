@@ -3,6 +3,7 @@
 import { createContext, useContext, useMemo } from "react";
 import type { Language } from "@/lib/i18n";
 import type { Profile } from "@/lib/auth/profile";
+import { resolveDisplayName } from "@/lib/display-name";
 
 export type CoupleContextValue = {
   language: Language;
@@ -30,8 +31,10 @@ export function CoupleProvider({
       language,
       me,
       partner,
-      myName: me.display_name?.trim() || "You",
-      partnerName: partner?.display_name?.trim() || "Partner",
+      myName: resolveDisplayName(me.id, me.display_name, "You"),
+      partnerName: partner
+        ? resolveDisplayName(partner.id, partner.display_name, "Partner")
+        : "Partner",
     }),
     [language, me, partner],
   );

@@ -50,6 +50,47 @@ Requirements:
 
 Re-running the script replaces existing Bible rows. Notes and study sessions that reference books will break if book IDs change — seed before heavy use, or accept a reset.
 
+## Seed Chin Bible data
+
+Chin (Tedim / Zomi) is optional and separate from the MM/EN seed. Apply migration `005_bible_chin` first (`supabase db push`), then run:
+
+```bash
+npm run seed:bible:chin
+```
+
+This updates `bible_books.name_chin` and `bible_verses.text_chin` only — it does **not** wipe MM/EN.
+
+### Candidate sources (confirm license before use)
+
+1. **eBible.org — Chin Tedim (ctd)** — recommended starting point for open texts  
+   https://ebible.org (search “Chin Tedim” / fileset `ctd`)
+2. **bible.com / YouVersion — Zomi Bible** — confirm redistribution rights before bulk download
+
+### How to supply data
+
+- Place a JSON file at `data/chin-bible.json`, **or**
+- Set `CHIN_BIBLE_URL` to a JSON endpoint, **or**
+- Set `CHIN_BIBLE_PATH` to another local path
+
+Expected JSON shape:
+
+```json
+{
+  "books": [
+    {
+      "order": 1,
+      "name": "Piancilna",
+      "abbreviation": "GEN",
+      "chapters": [
+        { "chapter": 1, "verses": [{ "verse": 1, "text": "…" }] }
+      ]
+    }
+  ]
+}
+```
+
+Books match existing rows by `order` (preferred) or `abbreviation`. Until Chin text is seeded, the reader falls back to Myanmar with a small “MM” badge.
+
 ## App notes
 
 - Dark theme is the default.

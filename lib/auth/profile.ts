@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { PARTNER_DISPLAY_NAMES } from "@/lib/config";
+import { isBadDisplayName } from "@/lib/display-name";
 import type { Language } from "@/lib/i18n";
 import type { Database } from "@/types/database";
 
@@ -17,7 +19,7 @@ export async function getCurrentUser() {
 export async function ensureProfile(
   supabase: SupabaseServer,
   userId: string,
-  email?: string | null,
+  _email?: string | null,
 ): Promise<Profile | null> {
   const { data: existing } = await supabase
     .from("profiles")
@@ -26,10 +28,22 @@ export async function ensureProfile(
     .maybeSingle();
 
   if (existing) {
+    if (isBadDisplayName(existing.display_name)) {
+      const known = PARTNER_DISPLAY_NAMES[userId] ?? null;
+      if (known) {
+        const { data: fixed } = await supabase
+          .from("profiles")
+          .update({ display_name: known })
+          .eq("id", userId)
+          .select("*")
+          .single();
+        if (fixed) return fixed;
+      }
+    }
     return existing;
   }
 
-  const displayName = email ? email.split("@")[0] : null;
+  const displayName = PARTNER_DISPLAY_NAMES[userId] ?? null;
   const { data: created, error } = await supabase
     .from("profiles")
     .insert({

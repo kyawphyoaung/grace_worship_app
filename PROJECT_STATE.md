@@ -4,10 +4,11 @@
 - Phase 1 (f56614b) — Foundation, auth, migrations 001–003
 - Phase 2 (c1d6c00) — Bible, Prayer, Gratitude, dark theme
 - Phase 2.5 (1d7f3c5) — iOS pickers, Home, Bible favorites, partner UI, migration 004
-  → Smoke test found 8 UI issues, NOT YET FIXED. See PHASE_2.5_FIXES.md
+- Phase 2.5 fixes — smoke test issues 1–9 (migration 005_bible_chin created; push pending owner)
 
 ## Next up
-- Phase 2.5 fixes (see PHASE_2.5_FIXES.md + PHASE_2.5_FIX_PROMPT.txt)
+- Apply migration 005 (`supabase db push`) after review
+- Optionally run `npm run seed:bible:chin` once Chin source is confirmed
 - Phase 3 — Worship (songs, events, setlists, PDF, post-service)
 - Phase 4 — Tracking, PWA, notifications, deploy
 
@@ -21,12 +22,14 @@
 - Packages allowed: @dnd-kit/core, @dnd-kit/sortable, @react-pdf/renderer, date-fns
 - TypeScript strict, no `any`
 - Single toast, 2.5s auto-dismiss
+- Bible reader languages: MM / EN / Chin (no Both). Chin falls back to MM until seeded.
 
 ## Commands
-npm run dev · npm run seed:bible · supabase migration new <n> · supabase db push · supabase gen types typescript
+npm run dev · npm run seed:bible · npm run seed:bible:chin · supabase migration new <n> · supabase db push · supabase gen types typescript
 
 ## Tables
-profiles, partners, bible_books, bible_verses, bible_study_sessions, bible_study_notes, bible_favorites, prayers, prayer_interactions, gratitude_entries, songs, song_sections, events, setlists, setlist_items, event_prayers, event_feedback, ministry_reflections
+profiles, partners, bible_books (+name_chin), bible_verses (+text_chin), bible_study_sessions, bible_study_notes, bible_favorites, prayers, prayer_interactions, gratitude_entries, songs, song_sections, events, setlists, setlist_items, event_prayers, event_feedback, ministry_reflections
 
 ## Migrations
-001_foundation, 002_prayer_gratitude, 003_worship, 004_bible_favorites (all applied)
+001_foundation, 002_prayer_gratitude, 003_worship, 004_bible_favorites (applied)
+005_bible_chin (created — not pushed until owner confirms)

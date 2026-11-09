@@ -1,5 +1,17 @@
-import { differenceInCalendarDays, parseISO } from "date-fns";
+import {
+  differenceInCalendarDays,
+  differenceInCalendarMonths,
+  differenceInCalendarYears,
+  format,
+  parseISO,
+} from "date-fns";
 import { ANNIVERSARY_DATE } from "@/lib/config";
+
+const MM_DIGITS = ["၀", "၁", "၂", "၃", "၄", "၅", "၆", "၇", "၈", "၉"] as const;
+
+export function toMyanmarDigits(n: number): string {
+  return String(n).replace(/\d/g, (d) => MM_DIGITS[Number(d)] ?? d);
+}
 
 export function getTogetherDuration(now = new Date()) {
   const start = parseISO(ANNIVERSARY_DATE);
@@ -19,8 +31,55 @@ export function getTogetherDuration(now = new Date()) {
     months += 12;
   }
   if (years < 0) {
-    return { totalDays: 0, years: 0, months: 0, days: 0 };
+    return {
+      totalDays: 0,
+      years: 0,
+      months: 0,
+      days: 0,
+      monthsaries: 0,
+      anniversaries: 0,
+      sinceLabelEn: formatSinceEn(start),
+      sinceLabelMm: formatSinceMm(start),
+    };
   }
 
-  return { totalDays, years, months, days };
+  // Completed monthly / yearly markers after the start date (start day itself = 0).
+  const monthsaries = Math.max(0, differenceInCalendarMonths(now, start));
+  const anniversaries = Math.max(0, differenceInCalendarYears(now, start));
+
+  return {
+    totalDays,
+    years,
+    months,
+    days,
+    monthsaries,
+    anniversaries,
+    sinceLabelEn: formatSinceEn(start),
+    sinceLabelMm: formatSinceMm(start),
+  };
+}
+
+function formatSinceEn(start: Date): string {
+  return `since ${format(start, "do MMM yyyy")}`;
+}
+
+function formatSinceMm(start: Date): string {
+  const y = toMyanmarDigits(start.getFullYear());
+  const d = toMyanmarDigits(start.getDate());
+  const monthNames = [
+    "ဇန်နဝါရီ",
+    "ဖေဖော်ဝါရီ",
+    "မတ်",
+    "ဧပြီ",
+    "မေ",
+    "ဇွန်",
+    "ဇူလိုင်",
+    "ဩဂုတ်",
+    "စက်တင်ဘာ",
+    "အောက်တိုဘာ",
+    "နိုဝင်ဘာ",
+    "ဒီဇင်ဘာ",
+  ];
+  const m = monthNames[start.getMonth()] ?? "";
+  return `${y} ခုနှစ် ${m} ${d} ရက်မှစ၍`;
 }

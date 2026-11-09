@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { RefreshCw } from "lucide-react";
 import { DAILY_VERSES } from "@/lib/verses/daily";
-import { getTogetherDuration } from "@/lib/anniversary";
+import { getTogetherDuration, toMyanmarDigits } from "@/lib/anniversary";
 import { t, tf, type Language } from "@/lib/i18n";
 import { useCouple } from "@/components/couple-provider";
 import { UserAvatar } from "@/components/user-avatar";
@@ -24,7 +24,7 @@ export function HomeWorkspace({
   } | null;
   genesis: { bookId: string; nameEn: string; nameMm: string } | null;
 }) {
-  const { me, partner } = useCouple();
+  const { me, partner, myName, partnerName } = useCouple();
   const [verseIndex, setVerseIndex] = useState(() =>
     Math.floor(Math.random() * DAILY_VERSES.length),
   );
@@ -33,6 +33,18 @@ export function HomeWorkspace({
 
   const primaryText = language === "mm" ? verse.text_mm : verse.text_en;
   const secondaryText = language === "mm" ? verse.text_en : verse.text_mm;
+  const daysDisplay =
+    language === "mm"
+      ? toMyanmarDigits(duration.totalDays)
+      : String(duration.totalDays);
+  const monthsariesDisplay =
+    language === "mm"
+      ? toMyanmarDigits(duration.monthsaries)
+      : String(duration.monthsaries);
+  const anniversariesDisplay =
+    language === "mm"
+      ? toMyanmarDigits(duration.anniversaries)
+      : String(duration.anniversaries);
 
   const continueHref = continueSession
     ? `/bible?book=${continueSession.bookId}&chapter=${continueSession.chapter}`
@@ -42,7 +54,6 @@ export function HomeWorkspace({
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-5">
-      {/* Daily verse */}
       <section className="relative overflow-hidden rounded-3xl border border-primary/20 bg-card p-5 shadow-[0_0_40px_-18px_hsl(var(--primary))]">
         <button
           type="button"
@@ -72,7 +83,6 @@ export function HomeWorkspace({
         </p>
       </section>
 
-      {/* Continue reading */}
       <section className="rounded-3xl border border-border bg-card p-5">
         <p className="text-xs uppercase tracking-wide text-muted-foreground">
           {continueSession
@@ -103,36 +113,52 @@ export function HomeWorkspace({
         </Button>
       </section>
 
-      {/* Anniversary */}
-      <section className="rounded-3xl border border-border bg-card p-6 text-center">
-        <div className="flex items-center justify-center gap-3">
+      <section className="relative overflow-hidden rounded-[1.75rem] border border-primary/25 bg-gradient-to-b from-card via-card to-primary/5 px-5 py-7 text-center shadow-[0_0_48px_-16px_hsl(var(--primary)/0.55)]">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-40"
+          style={{
+            background:
+              "radial-gradient(ellipse at 50% 0%, hsl(var(--primary) / 0.18), transparent 55%)",
+          }}
+        />
+        <div className="relative flex items-center justify-center gap-3 sm:gap-4">
           <UserAvatar
             userId={me.id}
-            displayName={me.display_name}
+            displayName={myName}
             avatarUrl={me.avatar_url}
             size={72}
           />
-          <HeartLarge />
+          <div className="flex items-center gap-1.5" aria-hidden>
+            <HeartIcon color="#7BA05B" />
+            <HeartIcon color="#C75450" />
+          </div>
           {partner ? (
             <UserAvatar
               userId={partner.id}
-              displayName={partner.display_name}
+              displayName={partnerName}
               avatarUrl={partner.avatar_url}
               size={72}
             />
           ) : null}
         </div>
-        <p className="mt-5 text-sm text-muted-foreground">
+        <p className="relative mt-6 text-sm text-muted-foreground">
           {t("home.togetherFor", language)}
         </p>
-        <p className="mt-1 text-4xl font-semibold text-primary">
-          {duration.totalDays}
+        <p className="relative mt-1 flex items-baseline justify-center gap-2">
+          <span className="text-5xl font-semibold tracking-tight text-primary">
+            {daysDisplay}
+          </span>
+          <span className="text-sm text-muted-foreground">
+            {t("home.daysSuffix", language)}
+          </span>
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {tf("home.yearsMonthsDays", language, {
-            y: String(duration.years),
-            m: String(duration.months),
-            d: String(duration.days),
+        <p className="relative mt-3 text-sm text-muted-foreground">
+          {language === "mm" ? duration.sinceLabelMm : duration.sinceLabelEn}
+        </p>
+        <p className="relative mt-2 text-xs text-muted-foreground/90">
+          {tf("home.monthsariesAnniversaries", language, {
+            m: monthsariesDisplay,
+            a: anniversariesDisplay,
           })}
         </p>
       </section>
@@ -140,15 +166,15 @@ export function HomeWorkspace({
   );
 }
 
-function HeartLarge() {
+function HeartIcon({ color }: { color: string }) {
   return (
     <svg
-      width="28"
-      height="28"
+      width="26"
+      height="26"
       viewBox="0 0 24 24"
-      className="text-primary"
-      fill="currentColor"
+      fill={color}
       aria-hidden
+      style={{ filter: `drop-shadow(0 0 6px ${color}66)` }}
     >
       <path d="M12 21s-6.7-4.35-9.33-7.4C.5 11.2.7 7.9 3.2 6.1c2-1.5 4.6-.9 5.9 1.1C10.4 5.2 13 4.6 15 6.1c2.5 1.8 2.7 5.1.53 7.5C18.7 16.65 12 21 12 21z" />
     </svg>

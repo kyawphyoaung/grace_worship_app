@@ -19,6 +19,7 @@ export type Database = {
           abbreviation: string
           book_order: number
           id: string
+          name_chin: string | null
           name_en: string
           name_mm: string
           testament: string
@@ -27,6 +28,7 @@ export type Database = {
           abbreviation: string
           book_order: number
           id?: string
+          name_chin?: string | null
           name_en: string
           name_mm: string
           testament: string
@@ -35,6 +37,7 @@ export type Database = {
           abbreviation?: string
           book_order?: number
           id?: string
+          name_chin?: string | null
           name_en?: string
           name_mm?: string
           testament?: string
@@ -178,6 +181,7 @@ export type Database = {
           book_id: string
           chapter: number
           id: string
+          text_chin: string | null
           text_en: string
           text_mm: string
           verse: number
@@ -186,6 +190,7 @@ export type Database = {
           book_id: string
           chapter: number
           id?: string
+          text_chin?: string | null
           text_en: string
           text_mm: string
           verse: number
@@ -194,6 +199,7 @@ export type Database = {
           book_id?: string
           chapter?: number
           id?: string
+          text_chin?: string | null
           text_en?: string
           text_mm?: string
           verse?: number
