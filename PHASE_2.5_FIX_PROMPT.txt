@@ -1,0 +1,46 @@
+Phase 2.5 fix pass. Read PHASE_2.5_FIXES.md in the project root. Fix all 9 issues. Keep dark theme, do not regress any Phase 2/2.5 functionality. Commit at end as: fix: phase 2.5 — smoke test issues 1-9.
+
+Per-issue guidance:
+
+1+4. Bible reader header: put language icon button + "Mark chapter as read" button on the SAME horizontal row directly under the pickers (compact). ALSO add the "Mark chapter as read" button as a sticky bottom bar visible when scrolling (auto-hides when the top button is in view). Both buttons trigger the same action.
+
+2. Couple pill popup: use a mobile-safe positioning (fixed with inset-x-4, right-aligned via right-0 with max-w). Never overflow viewport. Use a portal. Add backdrop tap to close.
+
+3. Language toggle: replace the 3-button group with a single icon button (globe icon). Tapping expands an inline animated row of options (MM / EN / Chin) with framer-like CSS transition (height + opacity). Selecting collapses back to icon with the current language label visible as a small badge. No new packages — use Tailwind transitions.
+
+5. Display name cleanup:
+   - Fetch profile.display_name at shell level.
+   - Remove any derived from email or domain.
+   - Tab labels become: [Avatar] Harry (Read), [Search icon] Search, [Flame icon] Streaks, [Heart icon] Favorites. Use profile vector icon for the name tab.
+   - Ensure Harry's account shows "Harry", Ruth's shows "Ruth Hoih".
+
+6. Streaks + calendar: 
+   - Streak page: show a list/grid of chapters read (book + chapter) grouped by date, not just counts.
+   - Calendar: each day shows book:chapter entries. Tap a day → see that day's chapters.
+   - Keep the gentle tone (no negative messaging).
+
+7. Favorites: render as cards showing:
+   - The highlighted/favorited text (truncated if long) in MM/EN
+   - Verse reference (Book Chapter:Verse)
+   - Tap → navigates to /bible?book=X&chapter=Y and scrolls to the verse, with the highlight/favorite marker visible.
+
+8+9. Chin language + remove Both:
+   - Remove "Both" option entirely from UI.
+   - Language selector: MM / EN / Chin (Tedim/Zomi).
+   - Database: add a `language` column to bible_verses? No — instead add a new column `text_chin` (TEXT, nullable) to bible_verses via migration 005. Also add `name_chin` to bible_books. RLS unchanged.
+   - Reader: display only the selected language's text. If Chin data is missing for a verse, fall back to MM with a subtle "MM" badge.
+   - Extend scripts/seed-bible.ts: add a Chin data loader. Source recommendation: eBible.org (Chin Tedim) or bible.com Zomi Bible. Make it a separate `npm run seed:bible:chin` command so I can run it once I confirm the source. Provide clear README instructions with candidate sources.
+
+10. Together for card redesign:
+   - Two hearts: left green (#7BA05B-ish), right red (#C75450-ish) — distinct, visible.
+   - Format: "Together for **25** days" (large number, small "days" suffix, both languages: "အတူတကွ **၂၅** ရက်" / "Together for **25** days")
+   - Below: "since 14th Oct 2026" / "၂၀၂၆ ခုနှစ် အောက်တိုဘာ ၁၄ ရက်မှစ၍"
+   - Below: "X monthsaries · Y anniversaries" / "လပတ်သစ် X ကြိမ် · နှစ်ပတ်လည် Y ကြိမ်"
+   - Card design: larger, gentle glow, subtle border, profile avatars flanking two hearts.
+   - Anniversary date stays in lib/config.ts as 2026-10-14. Do NOT change schema.
+
+Constraints:
+- One migration allowed: 005_bible_chin.sql (adds text_chin to bible_verses, name_chin to bible_books). Nothing else.
+- No new packages.
+- TypeScript strict, no any.
+- Print summary (files touched, migration status, deviations, smoke-test checklist), then STOP.
