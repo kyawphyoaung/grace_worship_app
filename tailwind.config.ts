@@ -20,6 +20,13 @@ export default {
         ],
       },
       colors: {
+        warm: {
+          bg: "#1a1815",
+          surface: "#252220",
+          cream: "#e8e2d8",
+          sage: "#8ba888",
+          amber: "#d4a574",
+        },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

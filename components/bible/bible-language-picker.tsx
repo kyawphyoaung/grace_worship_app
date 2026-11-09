@@ -3,15 +3,27 @@
 import { Globe } from "lucide-react";
 import { t, type Language } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import {
+  BIBLE_VERSION_BADGE,
+  type BibleVersion,
+} from "@/lib/config";
+import { Checkbox } from "@/components/ui/checkbox";
 
-export type BibleViewMode = "mm" | "en" | "chin";
+const OPTIONS: {
+  value: BibleVersion;
+  labelKey:
+    | "bible.viewMm"
+    | "bible.viewEn"
+    | "bible.viewChin"
+    | "bible.viewKjv";
+}[] = [
+  { value: "mm", labelKey: "bible.viewMm" },
+  { value: "en", labelKey: "bible.viewEn" },
+  { value: "chin", labelKey: "bible.viewChin" },
+  { value: "kjv", labelKey: "bible.viewKjv" },
+];
 
-const OPTIONS: { value: BibleViewMode; labelKey: "bible.viewMm" | "bible.viewEn" | "bible.viewChin" }[] =
-  [
-    { value: "mm", labelKey: "bible.viewMm" },
-    { value: "en", labelKey: "bible.viewEn" },
-    { value: "chin", labelKey: "bible.viewChin" },
-  ];
+export type BibleViewMode = BibleVersion;
 
 export function BibleLanguagePicker({
   language,
@@ -21,19 +33,27 @@ export function BibleLanguagePicker({
   onChange,
 }: {
   language: Language;
-  value: BibleViewMode;
+  value: BibleVersion[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onChange: (mode: BibleViewMode) => void;
+  onChange: (versions: BibleVersion[]) => void;
 }) {
-  const badge = t(
-    value === "mm"
-      ? "bible.viewMm"
-      : value === "en"
-        ? "bible.viewEn"
-        : "bible.viewChin",
-    language,
-  );
+  const badge =
+    value.length === 0
+      ? "—"
+      : value.length === 1
+        ? BIBLE_VERSION_BADGE[value[0]]
+        : String(value.length);
+
+  const toggle = (version: BibleVersion) => {
+    const has = value.includes(version);
+    if (has) {
+      if (value.length === 1) return;
+      onChange(value.filter((v) => v !== version));
+      return;
+    }
+    onChange([...value, version]);
+  };
 
   return (
     <div className="relative flex min-w-0 items-center">
@@ -53,28 +73,36 @@ export function BibleLanguagePicker({
       <div
         className={cn(
           "overflow-hidden transition-all duration-300 ease-out",
-          open ? "ml-2 max-w-[220px] opacity-100" : "ml-0 max-w-0 opacity-0",
+          open ? "ml-2 max-w-[280px] opacity-100" : "ml-0 max-w-0 opacity-0",
         )}
       >
-        <div className="flex gap-1 rounded-xl bg-muted/80 p-1">
-          {OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => {
-                onChange(opt.value);
-                onOpenChange(false);
-              }}
-              className={cn(
-                "min-h-9 rounded-lg px-2.5 text-xs font-medium transition-colors",
-                value === opt.value
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t(opt.labelKey, language)}
-            </button>
-          ))}
+        <div className="min-w-[220px] space-y-1 rounded-xl bg-muted/80 p-2">
+          <p className="px-1 pb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+            {t("bible.selectVersions", language)}
+          </p>
+          {OPTIONS.map((opt) => {
+            const checked = value.includes(opt.value);
+            return (
+              <label
+                key={opt.value}
+                className={cn(
+                  "flex min-h-9 cursor-pointer items-center gap-2 rounded-lg px-2 text-xs font-medium transition-colors",
+                  checked
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Checkbox
+                  checked={checked}
+                  onCheckedChange={() => toggle(opt.value)}
+                />
+                <span>{t(opt.labelKey, language)}</span>
+                <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                  {BIBLE_VERSION_BADGE[opt.value]}
+                </span>
+              </label>
+            );
+          })}
         </div>
       </div>
     </div>

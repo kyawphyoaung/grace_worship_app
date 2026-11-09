@@ -3,6 +3,7 @@ import {
   ensureProfile,
   getCurrentUser,
   getPartnerUserId,
+  profileBibleLanguages,
   profileLanguage,
 } from "@/lib/auth/profile";
 import type { Database } from "@/types/database";
@@ -40,7 +41,7 @@ async function enrichFavorites(
 
   const verseMap = new Map<
     string,
-    Pick<Verse, "text_mm" | "text_en" | "text_chin">
+    Pick<Verse, "text_mm" | "text_en" | "text_chin" | "text_kjv">
   >();
 
   // Batch by book to avoid huge OR filters.
@@ -55,7 +56,7 @@ async function enrichFavorites(
     const chapters = [...new Set(refs.map((r) => r.chapter))];
     const { data: verseRows } = await supabase
       .from("bible_verses")
-      .select("book_id, chapter, verse, text_mm, text_en, text_chin")
+      .select("book_id, chapter, verse, text_mm, text_en, text_chin, text_kjv")
       .eq("book_id", bookId)
       .in("chapter", chapters);
     for (const row of verseRows ?? []) {
@@ -63,6 +64,7 @@ async function enrichFavorites(
         text_mm: row.text_mm,
         text_en: row.text_en,
         text_chin: row.text_chin,
+        text_kjv: row.text_kjv,
       });
     }
   }
@@ -78,6 +80,7 @@ async function enrichFavorites(
       text_mm: verse?.text_mm ?? null,
       text_en: verse?.text_en ?? null,
       text_chin: verse?.text_chin ?? null,
+      text_kjv: verse?.text_kjv ?? null,
     };
   });
 }
@@ -92,6 +95,7 @@ export default async function BiblePage({
 
   const profile = await ensureProfile(supabase, user.id, user.email);
   const language = profileLanguage(profile);
+  const preferredVersions = profileBibleLanguages(profile);
   const partnerId = await getPartnerUserId(supabase, user.id);
   const params = await searchParams;
 
@@ -206,6 +210,7 @@ export default async function BiblePage({
       initialBookId={bookId}
       initialChapter={chapter}
       initialVerse={initialVerse && initialVerse > 0 ? initialVerse : null}
+      initialVersions={preferredVersions}
       verses={verses}
       chapterCount={chapterCount}
       myNotes={myNotes}

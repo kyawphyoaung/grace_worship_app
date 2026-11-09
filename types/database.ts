@@ -183,6 +183,7 @@ export type Database = {
           id: string
           text_chin: string | null
           text_en: string
+          text_kjv: string | null
           text_mm: string
           verse: number
         }
@@ -192,6 +193,7 @@ export type Database = {
           id?: string
           text_chin?: string | null
           text_en: string
+          text_kjv?: string | null
           text_mm: string
           verse: number
         }
@@ -201,6 +203,7 @@ export type Database = {
           id?: string
           text_chin?: string | null
           text_en?: string
+          text_kjv?: string | null
           text_mm?: string
           verse?: number
         }
@@ -327,6 +330,7 @@ export type Database = {
           entry_date: string
           id: string
           is_shared: boolean
+          recipient_id: string | null
           user_id: string
         }
         Insert: {
@@ -335,6 +339,7 @@ export type Database = {
           entry_date?: string
           id?: string
           is_shared?: boolean
+          recipient_id?: string | null
           user_id: string
         }
         Update: {
@@ -343,6 +348,7 @@ export type Database = {
           entry_date?: string
           id?: string
           is_shared?: boolean
+          recipient_id?: string | null
           user_id?: string
         }
         Relationships: []
@@ -441,6 +447,42 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          actor_id: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          message: string
+          read_at: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          message: string
+          read_at?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          message?: string
+          read_at?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       prayers: {
         Row: {
           answered_at: string | null
@@ -448,6 +490,7 @@ export type Database = {
           created_at: string
           id: string
           is_shared: boolean
+          recipient_id: string | null
           status: string
           testimony: string | null
           title: string
@@ -459,6 +502,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_shared?: boolean
+          recipient_id?: string | null
           status?: string
           testimony?: string | null
           title: string
@@ -470,6 +514,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_shared?: boolean
+          recipient_id?: string | null
           status?: string
           testimony?: string | null
           title?: string
@@ -484,6 +529,7 @@ export type Database = {
           display_name: string | null
           id: string
           prayer_reminder_time: string | null
+          preferred_bible_languages: string[]
           preferred_language: string
         }
         Insert: {
@@ -492,6 +538,7 @@ export type Database = {
           display_name?: string | null
           id: string
           prayer_reminder_time?: string | null
+          preferred_bible_languages?: string[]
           preferred_language?: string
         }
         Update: {
@@ -500,6 +547,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           prayer_reminder_time?: string | null
+          preferred_bible_languages?: string[]
           preferred_language?: string
         }
         Relationships: []

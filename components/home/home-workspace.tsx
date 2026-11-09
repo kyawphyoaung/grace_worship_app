@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { RefreshCw } from "lucide-react";
 import { DAILY_VERSES } from "@/lib/verses/daily";
@@ -25,9 +25,14 @@ export function HomeWorkspace({
   genesis: { bookId: string; nameEn: string; nameMm: string } | null;
 }) {
   const { me, partner, myName, partnerName } = useCouple();
-  const [verseIndex, setVerseIndex] = useState(() =>
-    Math.floor(Math.random() * DAILY_VERSES.length),
-  );
+  const [verseIndex, setVerseIndex] = useState(0);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    setVerseIndex(Math.floor(Math.random() * DAILY_VERSES.length));
+    setReady(true);
+  }, []);
+
   const verse = DAILY_VERSES[verseIndex] ?? DAILY_VERSES[0];
   const duration = useMemo(() => getTogetherDuration(), []);
 
@@ -72,13 +77,19 @@ export function HomeWorkspace({
         >
           <RefreshCw className="h-4 w-4" />
         </button>
-        <p className="mm-text pr-10 text-lg leading-relaxed text-foreground">
+        <p
+          className={`mm-text pr-10 text-lg leading-relaxed text-foreground transition-opacity ${ready ? "opacity-100" : "opacity-0"}`}
+        >
           {primaryText}
         </p>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+        <p
+          className={`mt-3 text-sm leading-relaxed text-muted-foreground transition-opacity ${ready ? "opacity-100" : "opacity-0"}`}
+        >
           {secondaryText}
         </p>
-        <p className="mt-4 text-xs font-medium text-primary">
+        <p
+          className={`mt-4 text-xs font-medium text-primary transition-opacity ${ready ? "opacity-100" : "opacity-0"}`}
+        >
           {verse.ref_mm} · {verse.ref_en}
         </p>
       </section>
@@ -129,8 +140,8 @@ export function HomeWorkspace({
             size={72}
           />
           <div className="flex items-center gap-1.5" aria-hidden>
-            <HeartIcon color="#7BA05B" />
-            <HeartIcon color="#C75450" />
+            <HeartIcon color="#8ba888" />
+            <HeartIcon color="#d4a574" />
           </div>
           {partner ? (
             <UserAvatar

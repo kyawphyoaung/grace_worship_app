@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCouple } from "@/components/couple-provider";
+import { UserAvatar } from "@/components/user-avatar";
+import { resolveDisplayName } from "@/lib/display-name";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database";
 
@@ -34,13 +36,14 @@ export function GratitudeWorkspace({
   entries: Entry[];
 }) {
   const router = useRouter();
-  const { partnerName } = useCouple();
+  const { me, partner, partnerName, myName } = useCouple();
   const [pending, startTransition] = useTransition();
   const [view, setView] = useState<View>("list");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState("");
   const [isShared, setIsShared] = useState(false);
+  const [toPartner, setToPartner] = useState(false);
   const [entryDate, setEntryDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [message, setMessage] = useState<string | null>(null);
@@ -62,15 +65,25 @@ export function GratitudeWorkspace({
     [entries, monthKey],
   );
 
+  const authorFor = (entry: Entry) => {
+    if (entry.user_id === userId) {
+      return { profile: me, name: myName };
+    }
+    return { profile: partner, name: partnerName };
+  };
+
   const save = () => {
     if (!content.trim()) return;
     startTransition(async () => {
       const supabase = createClient();
+      const recipientId =
+        toPartner && partner ? partner.id : null;
       const { error } = await supabase.from("gratitude_entries").insert({
         user_id: userId,
         content: content.trim(),
         entry_date: entryDate,
-        is_shared: isShared,
+        is_shared: toPartner || isShared,
+        recipient_id: recipientId,
       });
       if (error) {
         setMessage(error.message);
@@ -79,6 +92,7 @@ export function GratitudeWorkspace({
       setOpen(false);
       setContent("");
       setIsShared(false);
+      setToPartner(false);
       router.refresh();
     });
   };
@@ -126,22 +140,51 @@ export function GratitudeWorkspace({
                 {t("common.empty", language)}
               </li>
             ) : (
-              filtered.map((entry) => (
-                <li
-                  key={entry.id}
-                  className="rounded-xl border border-border bg-card p-3"
-                >
-                  <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                    <span>{entry.entry_date}</span>
-                    <span>
-                      {entry.is_shared
-                        ? t("common.shared", language)
-                        : t("common.private", language)}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm leading-relaxed">{entry.content}</p>
-                </li>
-              ))
+              filtered.map((entry) => {
+                const { profile, name } = authorFor(entry);
+                return (
+                  <li
+                    key={entry.id}
+                    className="rounded-xl border border-border bg-card p-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <UserAvatar
+                        userId={entry.user_id}
+                        displayName={
+                          profile
+                            ? resolveDisplayName(
+                                profile.id,
+                                profile.display_name,
+                                name,
+                              )
+                            : name
+                        }
+                        avatarUrl={profile?.avatar_url ?? null}
+                        size={28}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{name}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {entry.entry_date}
+                          {entry.created_at
+                            ? ` · ${format(new Date(entry.created_at), "h:mm a")}`
+                            : ""}
+                        </p>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {entry.recipient_id
+                          ? tf("gratitude.toPartner", language, {
+                              name: partnerName,
+                            })
+                          : entry.is_shared
+                            ? t("common.shared", language)
+                            : t("common.private", language)}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed">{entry.content}</p>
+                  </li>
+                );
+              })
             )}
           </ul>
         </div>
@@ -261,14 +304,33 @@ export function GratitudeWorkspace({
             {monthlyEntries
               .slice()
               .sort((a, b) => a.entry_date.localeCompare(b.entry_date))
-              .map((entry) => (
-                <li key={entry.id} className="border-t border-border/60 pt-2 text-sm">
-                  <span className="text-xs text-primary">
-                    {format(parseISO(entry.entry_date), "MMM d")}
-                  </span>
-                  <p className="mt-0.5 leading-relaxed">{entry.content}</p>
-                </li>
-              ))}
+              .map((entry) => {
+                const { profile, name } = authorFor(entry);
+                return (
+                  <li key={entry.id} className="border-t border-border/60 pt-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <UserAvatar
+                        userId={entry.user_id}
+                        displayName={
+                          profile
+                            ? resolveDisplayName(
+                                profile.id,
+                                profile.display_name,
+                                name,
+                              )
+                            : name
+                        }
+                        avatarUrl={profile?.avatar_url ?? null}
+                        size={22}
+                      />
+                      <span className="text-xs text-primary">
+                        {format(parseISO(entry.entry_date), "MMM d")} · {name}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 leading-relaxed">{entry.content}</p>
+                  </li>
+                );
+              })}
           </ul>
         </div>
       ) : null}
@@ -297,10 +359,24 @@ export function GratitudeWorkspace({
           <label className="flex min-h-11 items-center gap-3 text-sm">
             <Checkbox
               checked={isShared}
+              disabled={toPartner}
               onCheckedChange={(v) => setIsShared(v === true)}
             />
             {tf("common.shareWithName", language, { name: partnerName })}
           </label>
+          {partner ? (
+            <label className="flex min-h-11 items-center gap-3 text-sm">
+              <Checkbox
+                checked={toPartner}
+                onCheckedChange={(v) => {
+                  const next = v === true;
+                  setToPartner(next);
+                  if (next) setIsShared(true);
+                }}
+              />
+              {tf("gratitude.toPartner", language, { name: partnerName })}
+            </label>
+          ) : null}
           <div className="flex justify-end gap-2">
             <Button variant="ghost" className="min-h-11" onClick={() => setOpen(false)}>
               {t("common.cancel", language)}

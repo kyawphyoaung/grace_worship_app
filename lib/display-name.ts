@@ -1,5 +1,3 @@
-import { PARTNER_DISPLAY_NAMES } from "@/lib/config";
-
 /** Reject email local-parts, domains, and raw emails as display names. */
 export function isBadDisplayName(name: string | null | undefined): boolean {
   if (!name?.trim()) return true;
@@ -10,15 +8,14 @@ export function isBadDisplayName(name: string | null | undefined): boolean {
   return false;
 }
 
+/** Always prefer profiles.display_name — never map by UUID. */
 export function resolveDisplayName(
-  userId: string,
+  _userId: string,
   displayName: string | null | undefined,
   fallback = "You",
 ): string {
   if (!isBadDisplayName(displayName)) {
     return displayName!.trim();
   }
-  const known = PARTNER_DISPLAY_NAMES[userId];
-  if (known) return known;
   return fallback;
 }

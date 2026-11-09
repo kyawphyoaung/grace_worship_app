@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { ListFilter } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { t, tf, type Language } from "@/lib/i18n";
 import { Segmented } from "@/components/ui/segmented";
@@ -12,13 +13,14 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCouple } from "@/components/couple-provider";
 import { UserAvatar } from "@/components/user-avatar";
+import { resolveDisplayName } from "@/lib/display-name";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database";
 
 type Prayer = Database["public"]["Tables"]["prayers"]["Row"];
 type Interaction = Database["public"]["Tables"]["prayer_interactions"]["Row"];
 
-type Filter = "all" | "pending" | "answered" | "shared" | "private";
+type FilterValue = "all" | "pending" | "answered" | "shared" | "private";
 type Tab = "prayers" | "journal" | "settings";
 
 export function PrayerWorkspace({
@@ -39,12 +41,13 @@ export function PrayerWorkspace({
   mode?: "full" | "journal-only";
 }) {
   const router = useRouter();
-  const { partner, partnerName } = useCouple();
+  const { me, partner, partnerName, myName } = useCouple();
   const [pending, startTransition] = useTransition();
   const [tab, setTab] = useState<Tab>(mode === "journal-only" ? "journal" : "prayers");
-  const [filter, setFilter] = useState<Filter>(
+  const [filter, setFilter] = useState<FilterValue>(
     mode === "journal-only" ? "private" : "all",
   );
+  const [filterOpen, setFilterOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Prayer | null>(null);
   const [title, setTitle] = useState("");
@@ -54,9 +57,9 @@ export function PrayerWorkspace({
   const [answeredPrayer, setAnsweredPrayer] = useState<Prayer | null>(null);
   const [answeredAt, setAnsweredAt] = useState(format(new Date(), "yyyy-MM-dd"));
   const [testimony, setTestimony] = useState("");
-  const [encourageOpen, setEncourageOpen] = useState(false);
-  const [encouragePrayer, setEncouragePrayer] = useState<Prayer | null>(null);
-  const [encourageNote, setEncourageNote] = useState("");
+  const [prayOpen, setPrayOpen] = useState(false);
+  const [prayPrayer, setPrayPrayer] = useState<Prayer | null>(null);
+  const [prayNote, setPrayNote] = useState("");
   const [reminder, setReminder] = useState(reminderTime?.slice(0, 5) ?? "08:00");
   const [message, setMessage] = useState<string | null>(null);
 
@@ -69,6 +72,16 @@ export function PrayerWorkspace({
     }
     return map;
   }, [interactions]);
+
+  const authorName = (prayer: Prayer) => {
+    if (prayer.user_id === userId) return myName;
+    return partnerName;
+  };
+
+  const authorProfile = (prayer: Prayer) => {
+    if (prayer.user_id === userId) return me;
+    return partner;
+  };
 
   const visible = useMemo(() => {
     let rows = prayers;
@@ -88,6 +101,21 @@ export function PrayerWorkspace({
         return rows;
     }
   }, [prayers, filter, tab, mode, userId]);
+
+  const filterLabel = (value: FilterValue) => {
+    switch (value) {
+      case "pending":
+        return t("prayer.filterPending", language);
+      case "answered":
+        return t("prayer.filterAnswered", language);
+      case "shared":
+        return t("prayer.filterShared", language);
+      case "private":
+        return t("prayer.filterPrivate", language);
+      default:
+        return t("prayer.filterAll", language);
+    }
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -164,38 +192,23 @@ export function PrayerWorkspace({
     });
   };
 
-  const prayedFor = (prayer: Prayer) => {
+  const savePrayFor = () => {
+    if (!prayPrayer) return;
     startTransition(async () => {
       const supabase = createClient();
+      const note = prayNote.trim();
       const { error } = await supabase.from("prayer_interactions").insert({
-        prayer_id: prayer.id,
+        prayer_id: prayPrayer.id,
         user_id: userId,
         interaction_type: "prayed_for",
+        note: note || null,
       });
       if (error) {
         setMessage(error.message);
         return;
       }
-      router.refresh();
-    });
-  };
-
-  const saveEncouragement = () => {
-    if (!encouragePrayer || !encourageNote.trim()) return;
-    startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase.from("prayer_interactions").insert({
-        prayer_id: encouragePrayer.id,
-        user_id: userId,
-        interaction_type: "encouraged",
-        note: encourageNote.trim(),
-      });
-      if (error) {
-        setMessage(error.message);
-        return;
-      }
-      setEncourageOpen(false);
-      setEncourageNote("");
+      setPrayOpen(false);
+      setPrayNote("");
       router.refresh();
     });
   };
@@ -268,17 +281,57 @@ export function PrayerWorkspace({
         </div>
       ) : (
         <>
-          <Segmented
-            value={filter}
-            onChange={setFilter}
-            options={[
-              { value: "all", label: t("prayer.filterAll", language) },
-              { value: "pending", label: t("prayer.filterPending", language) },
-              { value: "answered", label: t("prayer.filterAnswered", language) },
-              { value: "shared", label: t("prayer.filterShared", language) },
-              { value: "private", label: t("prayer.filterPrivate", language) },
-            ]}
-          />
+          <div className="relative flex items-center">
+            <button
+              type="button"
+              aria-label={t("prayer.filter", language)}
+              aria-expanded={filterOpen}
+              onClick={() => setFilterOpen((v) => !v)}
+              className="relative flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-card text-foreground"
+            >
+              <ListFilter className="h-4 w-4" />
+              <span className="absolute -bottom-1 -right-1 max-w-[4.5rem] truncate rounded-full bg-primary px-1.5 py-px text-[9px] font-semibold leading-none text-primary-foreground">
+                {filterLabel(filter)}
+              </span>
+            </button>
+            <div
+              className={cn(
+                "overflow-hidden transition-all duration-300 ease-out",
+                filterOpen
+                  ? "ml-2 max-w-[320px] opacity-100"
+                  : "ml-0 max-w-0 opacity-0",
+              )}
+            >
+              <div className="flex gap-1 rounded-xl bg-muted/80 p-1">
+                {(
+                  [
+                    "all",
+                    "pending",
+                    "answered",
+                    "shared",
+                    "private",
+                  ] as FilterValue[]
+                ).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => {
+                      setFilter(value);
+                      setFilterOpen(false);
+                    }}
+                    className={cn(
+                      "min-h-9 rounded-lg px-2.5 text-xs font-medium transition-colors",
+                      filter === value
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {filterLabel(value)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
 
           <ul className="space-y-3">
             {visible.length === 0 ? (
@@ -289,6 +342,8 @@ export function PrayerWorkspace({
               visible.map((prayer) => {
                 const rows = interactionsByPrayer.get(prayer.id) ?? [];
                 const isMine = prayer.user_id === userId;
+                const author = authorProfile(prayer);
+                const name = authorName(prayer);
                 const partnerPrayed = rows.some(
                   (r) =>
                     r.interaction_type === "prayed_for" &&
@@ -299,10 +354,26 @@ export function PrayerWorkspace({
                     key={prayer.id}
                     className="rounded-2xl border border-border bg-card p-4"
                   >
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <UserAvatar
+                        userId={prayer.user_id}
+                        displayName={
+                          author
+                            ? resolveDisplayName(author.id, author.display_name, name)
+                            : name
+                        }
+                        avatarUrl={author?.avatar_url ?? null}
+                        size={32}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{name}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {format(new Date(prayer.created_at), "MMM d · h:mm a")}
+                        </p>
+                      </div>
                       <span
                         className={cn(
-                          "rounded-full px-2 py-0.5",
+                          "rounded-full px-2 py-0.5 text-xs",
                           prayer.status === "answered"
                             ? "bg-primary/15 text-primary"
                             : "bg-muted text-muted-foreground",
@@ -312,6 +383,9 @@ export function PrayerWorkspace({
                           ? t("prayer.filterAnswered", language)
                           : t("prayer.filterPending", language)}
                       </span>
+                    </div>
+
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       <span>
                         {prayer.is_shared
                           ? t("common.shared", language)
@@ -322,7 +396,7 @@ export function PrayerWorkspace({
                           {partner ? (
                             <UserAvatar
                               userId={partner.id}
-                              displayName={partner.display_name}
+                              displayName={partnerName}
                               avatarUrl={partner.avatar_url}
                               size={18}
                             />
@@ -333,6 +407,7 @@ export function PrayerWorkspace({
                         </span>
                       ) : null}
                     </div>
+
                     <h3 className="mt-2 text-lg font-medium">{prayer.title}</h3>
                     <p className="mt-1 text-sm leading-relaxed text-foreground/90">
                       {prayer.content}
@@ -343,14 +418,16 @@ export function PrayerWorkspace({
                       </p>
                     ) : null}
 
-                    {rows.filter((r) => r.note).map((r) => (
-                      <p
-                        key={r.id}
-                        className="mt-2 rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground"
-                      >
-                        {r.note}
-                      </p>
-                    ))}
+                    {rows
+                      .filter((r) => r.note)
+                      .map((r) => (
+                        <p
+                          key={r.id}
+                          className="mt-2 rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground"
+                        >
+                          {r.note}
+                        </p>
+                      ))}
 
                     <div className="mt-3 flex flex-wrap gap-2">
                       {isMine ? (
@@ -367,9 +444,7 @@ export function PrayerWorkspace({
                               className="min-h-11"
                               onClick={() => {
                                 setAnsweredPrayer(prayer);
-                                setAnsweredAt(
-                                  format(new Date(), "yyyy-MM-dd"),
-                                );
+                                setAnsweredAt(format(new Date(), "yyyy-MM-dd"));
                                 setTestimony("");
                                 setAnsweredOpen(true);
                               }}
@@ -380,26 +455,19 @@ export function PrayerWorkspace({
                         </>
                       ) : null}
                       {!isMine && prayer.is_shared && partnerId ? (
-                        <>
-                          <Button
-                            className="min-h-11"
-                            disabled={pending}
-                            onClick={() => prayedFor(prayer)}
-                          >
-                            {t("prayer.iPrayed", language)}
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            className="min-h-11"
-                            onClick={() => {
-                              setEncouragePrayer(prayer);
-                              setEncourageNote("");
-                              setEncourageOpen(true);
-                            }}
-                          >
-                            {t("prayer.encourage", language)}
-                          </Button>
-                        </>
+                        <Button
+                          className="min-h-11"
+                          disabled={pending}
+                          onClick={() => {
+                            setPrayPrayer(prayer);
+                            setPrayNote("");
+                            setPrayOpen(true);
+                          }}
+                        >
+                          {tf("prayer.prayForName", language, {
+                            name: partnerName,
+                          })}
+                        </Button>
                       ) : null}
                     </div>
                   </li>
@@ -442,7 +510,11 @@ export function PrayerWorkspace({
             {tf("common.shareWithName", language, { name: partnerName })}
           </label>
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" className="min-h-11" onClick={() => setFormOpen(false)}>
+            <Button
+              variant="ghost"
+              className="min-h-11"
+              onClick={() => setFormOpen(false)}
+            >
               {t("common.cancel", language)}
             </Button>
             <Button className="min-h-11" disabled={pending} onClick={savePrayer}>
@@ -489,27 +561,27 @@ export function PrayerWorkspace({
       </Modal>
 
       <Modal
-        open={encourageOpen}
-        onClose={() => setEncourageOpen(false)}
-        title={t("prayer.encourage", language)}
+        open={prayOpen}
+        onClose={() => setPrayOpen(false)}
+        title={tf("prayer.prayForName", language, { name: partnerName })}
       >
         <div className="space-y-4">
-          <Labelish label={t("prayer.encouragementNote", language)}>
+          <Labelish label={t("prayer.prayNoteOptional", language)}>
             <textarea
               className="min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              value={encourageNote}
-              onChange={(e) => setEncourageNote(e.target.value)}
+              value={prayNote}
+              onChange={(e) => setPrayNote(e.target.value)}
             />
           </Labelish>
           <div className="flex justify-end gap-2">
             <Button
               variant="ghost"
               className="min-h-11"
-              onClick={() => setEncourageOpen(false)}
+              onClick={() => setPrayOpen(false)}
             >
               {t("common.cancel", language)}
             </Button>
-            <Button className="min-h-11" disabled={pending} onClick={saveEncouragement}>
+            <Button className="min-h-11" disabled={pending} onClick={savePrayFor}>
               {t("common.save", language)}
             </Button>
           </div>

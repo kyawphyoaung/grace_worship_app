@@ -99,8 +99,18 @@ export const strings = {
     viewMm: { en: "MM", mm: "မြန်မာ" },
     viewEn: { en: "EN", mm: "အင်္ဂလိပ်" },
     viewChin: { en: "Chin", mm: "ချင်း" },
-    language: { en: "Bible language", mm: "ကျမ်းစာဘာသာ" },
+    viewKjv: { en: "KJV", mm: "KJV" },
+    badgeMm: { en: "MM", mm: "MM" },
+    badgeEn: { en: "EN", mm: "EN" },
+    badgeChin: { en: "Tedim", mm: "Tedim" },
+    badgeKjv: { en: "KJV", mm: "KJV" },
+    language: { en: "Bible versions", mm: "ကျမ်းစာဗားရှင်း" },
+    selectVersions: {
+      en: "Select versions",
+      mm: "ဗားရှင်း ရွေးရန်",
+    },
     mmFallback: { en: "MM", mm: "မြန်မာ" },
+    kjvFallback: { en: "EN", mm: "အင်္ဂလိပ်" },
     markRead: { en: "Mark chapter as read", mm: "အခန်းကို ဖတ်ပြီးဟုမှတ်ရန်" },
     markedRead: { en: "Chapter marked as read", mm: "ဖတ်ပြီးဟု မှတ်ပြီးပါပြီ" },
     saveNote: { en: "Save note", mm: "မှတ်ချက်သိမ်းရန်" },
@@ -182,18 +192,27 @@ export const strings = {
     answeredDate: { en: "Answered on", mm: "ဖြေကြားသည့်နေ့" },
     testimony: { en: "Testimony", mm: "သက်သေခံချက်" },
     iPrayed: { en: "I prayed for this", mm: "ဤအတွက် ဆုတောင်းခဲ့သည်" },
+    prayForName: {
+      en: "Pray for {name}",
+      mm: "{name} အတွက် ဆုတောင်းရန်",
+    },
+    prayNoteOptional: {
+      en: "Optional note",
+      mm: "မှတ်ချက် (မဖြစ်မနေ မဟုတ်)",
+    },
     encourage: { en: "Encourage", mm: "အားပေးရန်" },
     encouragementNote: {
       en: "Encouragement note",
       mm: "အားပေးစာ",
     },
+    filter: { en: "Filter", mm: "စစ်ထုတ်" },
     reminderTime: {
       en: "Daily prayer reminder",
       mm: "နေ့စဉ် ဆုတောင်း သတိပေးချိန်",
     },
     reminderHint: {
-      en: "Saved now. Notifications will arrive in a later phase.",
-      mm: "သိမ်းပြီးပါပြီ။ အသိပေးချက်များကို နောက်အဆင့်တွင် ချိတ်ဆက်ပါမည်။",
+      en: "Saved. In-app notifications are live for partner activity.",
+      mm: "သိမ်းပြီးပါပြီ။ အဖော်လှုပ်ရှားမှု အသိပေးချက်များ အဆင်သင့်ဖြစ်ပါပြီ။",
     },
     namePrayed: {
       en: "{name} prayed",
@@ -207,6 +226,10 @@ export const strings = {
       en: "What are you thankful for today?",
       mm: "ယနေ့ ဘာအတွက် ကျေးဇူးတင်သလဲ?",
     },
+    toPartner: {
+      en: "Gratitude to {name}",
+      mm: "{name} အတွက် ကျေးဇူးတင်ချက်",
+    },
     list: { en: "List", mm: "စာရင်း" },
     calendar: { en: "Calendar", mm: "ပြက္ခဒိန်" },
     monthly: { en: "Monthly", mm: "လစဉ်" },
@@ -219,6 +242,11 @@ export const strings = {
       mm: "ဤလ၏ ကျေးဇူးတင်ချက်များ",
     },
     entriesCount: { en: "entries", mm: "ခု" },
+  },
+  notifications: {
+    title: { en: "Notifications", mm: "အသိပေးချက်များ" },
+    empty: { en: "No notifications yet.", mm: "အသိပေးချက် မရှိသေးပါ။" },
+    markAllRead: { en: "Mark all read", mm: "အားလုံး ဖတ်ပြီး" },
   },
 } as const;
 

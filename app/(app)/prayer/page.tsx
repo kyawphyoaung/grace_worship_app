@@ -22,6 +22,7 @@ export default async function PrayerPage() {
       supabase
         .from("prayers")
         .select("*")
+        .or(`user_id.eq.${user.id},is_shared.eq.true`)
         .order("created_at", { ascending: false }),
       supabase
         .from("prayer_interactions")
@@ -30,7 +31,9 @@ export default async function PrayerPage() {
       supabase
         .from("gratitude_entries")
         .select("*")
-        .eq("user_id", user.id)
+        .or(
+          `user_id.eq.${user.id},is_shared.eq.true${partnerId ? `,recipient_id.eq.${user.id}` : ""}`,
+        )
         .order("entry_date", { ascending: false }),
     ]);
 

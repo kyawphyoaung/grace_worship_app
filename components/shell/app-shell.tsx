@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/shell/sidebar";
 import { LanguageToggle } from "@/components/language-toggle";
 import { LogoutButton } from "@/components/logout-button";
 import { CouplePill } from "@/components/shell/couple-pill";
+import { NotificationBell } from "@/components/shell/notification-bell";
 import { t, type Language } from "@/lib/i18n";
 import type { Profile } from "@/lib/auth/profile";
 import { CoupleProvider } from "@/components/couple-provider";
@@ -37,6 +38,7 @@ export function AppShell({
               </div>
               <div className="flex items-center gap-2">
                 <CouplePill />
+                <NotificationBell language={language} userId={me.id} />
                 <LanguageToggle userId={me.id} language={language} />
                 <LogoutButton label={t("auth.logout", language)} />
               </div>

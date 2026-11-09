@@ -50,49 +50,38 @@ Requirements:
 
 Re-running the script replaces existing Bible rows. Notes and study sessions that reference books will break if book IDs change — seed before heavy use, or accept a reset.
 
+## Seed KJV Bible data
+
+KJV is optional and separate from the MM/EN seed. Migration `006_notifications_and_versions` must be applied first.
+
+```bash
+npm run seed:bible:kjv
+```
+
+Downloads the public-domain King James Version from [`bible.helloao.org`](https://bible.helloao.org) (`eng_kjv`) and updates `bible_verses.text_kjv` only (does not wipe MM/EN/Chin).
+
 ## Seed Chin Bible data
 
-Chin (Tedim / Zomi) is optional and separate from the MM/EN seed. Apply migration `005_bible_chin` first (`supabase db push`), then run:
+Chin (Tedim / Zomi) is optional and separate from the MM/EN seed. Migration `005_bible_chin` must be applied first.
+
+1. Place the complete Tedim Bible at `data/chin/tedim_bible.txt` (one verse per line, OT→NT canonical order).
+2. Run:
 
 ```bash
 npm run seed:bible:chin
 ```
 
-This updates `bible_books.name_chin` and `bible_verses.text_chin` only — it does **not** wipe MM/EN.
+This updates `bible_verses.text_chin` (and a few `bible_books.name_chin` labels). It does **not** wipe MM/EN.
 
-### Candidate sources (confirm license before use)
+Override path with `CHIN_BIBLE_PATH` if needed. Requires `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`.
 
-1. **eBible.org — Chin Tedim (ctd)** — recommended starting point for open texts  
-   https://ebible.org (search “Chin Tedim” / fileset `ctd`)
-2. **bible.com / YouVersion — Zomi Bible** — confirm redistribution rights before bulk download
+**Note:** The Tedim file has ~30,715 verses vs ~31,105 in the DB (no `GEN 1:1` prefixes — plain verse-per-line). The script maps via USFM book codes using known book-start anchors (GEN, EXO, MAT, MRK, …). GEN/EXO match exactly; soft stretches share remaining lines proportionally. Unmapped DB verses stay null and fall back to MM in the reader.
 
-### How to supply data
-
-- Place a JSON file at `data/chin-bible.json`, **or**
-- Set `CHIN_BIBLE_URL` to a JSON endpoint, **or**
-- Set `CHIN_BIBLE_PATH` to another local path
-
-Expected JSON shape:
-
-```json
-{
-  "books": [
-    {
-      "order": 1,
-      "name": "Piancilna",
-      "abbreviation": "GEN",
-      "chapters": [
-        { "chapter": 1, "verses": [{ "verse": 1, "text": "…" }] }
-      ]
-    }
-  ]
-}
-```
-
-Books match existing rows by `order` (preferred) or `abbreviation`. Until Chin text is seeded, the reader falls back to Myanmar with a small “MM” badge.
+If your file uses explicit refs instead (`GEN 1:1 …` or `GEN|1|1|…`), the script detects that format automatically.
 
 ## App notes
 
-- Dark theme is the default.
+- Warm peaceful dark theme is the default.
 - UI language toggle (EN / MM) is stored on `profiles.preferred_language`.
-- Prayer reminder time is stored on `profiles.prayer_reminder_time`; push notifications come in a later phase.
+- Bible versions (MM / EN / Chin / KJV, multi-select) are stored on `profiles.preferred_bible_languages`.
+- Prayer reminder time is stored on `profiles.prayer_reminder_time`; in-app notifications are live (bell in the top bar).

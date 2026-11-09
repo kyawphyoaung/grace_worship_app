@@ -6,7 +6,8 @@
     "start": "next start",
     "lint": "eslint .",
     "seed:bible": "npx tsx scripts/seed-bible.ts",
-    "seed:bible:chin": "npx tsx scripts/seed-bible-chin.ts"
+    "seed:bible:chin": "npx tsx scripts/seed-bible-chin.ts",
+    "seed:bible:kjv": "npx tsx scripts/seed-bible-kjv.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
