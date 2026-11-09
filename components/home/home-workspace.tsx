@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { RefreshCw } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { CalendarDays, RefreshCw } from "lucide-react";
 import { DAILY_VERSES } from "@/lib/verses/daily";
 import { getTogetherDuration, toMyanmarDigits } from "@/lib/anniversary";
 import { t, tf, type Language } from "@/lib/i18n";
@@ -10,10 +11,19 @@ import { useCouple } from "@/components/couple-provider";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 
+type UpcomingEvent = {
+  id: string;
+  event_name: string;
+  event_date: string;
+  event_type: string;
+  role: string;
+};
+
 export function HomeWorkspace({
   language,
   continueSession,
   genesis,
+  upcomingEvents,
 }: {
   language: Language;
   continueSession: {
@@ -23,6 +33,7 @@ export function HomeWorkspace({
     nameMm: string;
   } | null;
   genesis: { bookId: string; nameEn: string; nameMm: string } | null;
+  upcomingEvents: UpcomingEvent[];
 }) {
   const { me, partner, myName, partnerName } = useCouple();
   const [verseIndex, setVerseIndex] = useState(0);
@@ -173,6 +184,39 @@ export function HomeWorkspace({
           })}
         </p>
       </section>
+
+      {upcomingEvents.length > 0 ? (
+        <section className="overflow-hidden rounded-3xl border border-teal-400/25 bg-gradient-to-br from-card via-card to-teal-950/30 p-5 shadow-[0_0_40px_-18px_hsl(168_55%_40%/0.45)]">
+          <div className="mb-3 flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-primary" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-primary">
+              {t("home.upcomingEvents", language)}
+            </h2>
+          </div>
+          <ul className="space-y-2.5">
+            {upcomingEvents.map((event) => (
+              <li key={event.id}>
+                <Link
+                  href={`/worship?event=${event.id}`}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/30 px-3 py-3 transition hover:border-primary/40"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{event.event_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(parseISO(event.event_date), "EEE · MMM d, yyyy")}
+                      {" · "}
+                      {event.role}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-xs font-medium text-primary">
+                    →
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </div>
   );
 }

@@ -3,9 +3,7 @@
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { ArrowLeft, Download, Play } from "lucide-react";
-import { pdf } from "@react-pdf/renderer";
 import { t, type Language } from "@/lib/i18n";
-import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import {
   SetlistPlanner,
@@ -13,13 +11,6 @@ import {
 } from "@/components/worship/setlist-planner";
 import { RehearsalMode } from "@/components/worship/rehearsal-mode";
 import { EventFeed } from "@/components/worship/event-feed";
-import {
-  EventChartDocument,
-  ensurePdfFonts,
-  type PdfSongItem,
-} from "@/lib/pdf/event-chart";
-import { songTimeSignature } from "@/lib/worship/constants";
-import { transposeLyrics } from "@/lib/music/transpose";
 import type { Database } from "@/types/database";
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
@@ -56,9 +47,7 @@ export function EventDetail({
   reflections: MinistryReflection[];
   onBack: () => void;
 }) {
-  const { showToast } = useToast();
   const [rehearsal, setRehearsal] = useState(false);
-  const [exporting, setExporting] = useState(false);
 
   const sectionsBySong = useMemo(() => {
     const map = new Map<string, SongSection[]>();
@@ -69,6 +58,8 @@ export function EventDetail({
     }
     return map;
   }, [sections]);
+
+  const hasKeyOverride = items.some((item) => Boolean(item.key_override));
 
   const roleLabel = (role: string) => {
     if (role === "leader") return t("worship.roleLeader", language);
@@ -89,62 +80,9 @@ export function EventDetail({
     }
   };
 
-  const exportPdf = async () => {
-    setExporting(true);
-    try {
-      ensurePdfFonts();
-      const pdfItems: PdfSongItem[] = items.map((item) => {
-        const fromKey = item.song.default_key || "C";
-        const toKey = item.key_override || fromKey;
-        return {
-          position: item.position,
-          key: toKey,
-          time_signature: songTimeSignature(item.song),
-          transition_note: item.transition_note,
-          song: {
-            title_en: item.song.title_en,
-            title_mm: item.song.title_mm,
-            author: item.song.author,
-            default_key: item.song.default_key,
-            bpm: item.song.bpm,
-          },
-          sections: [...(sectionsBySong.get(item.song_id) ?? [])]
-            .sort((a, b) => a.section_order - b.section_order)
-            .map((s) => ({
-              label: s.label,
-              section_type: s.section_type,
-              lyrics_mm: s.lyrics_mm
-                ? transposeLyrics(s.lyrics_mm, fromKey, toKey)
-                : null,
-              lyrics_en: s.lyrics_en
-                ? transposeLyrics(s.lyrics_en, fromKey, toKey)
-                : null,
-            })),
-        };
-      });
-
-      const blob = await pdf(
-        <EventChartDocument
-          event={{
-            event_name: event.event_name,
-            event_date: event.event_date,
-          }}
-          items={pdfItems}
-        />,
-      ).toBlob();
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${event.event_name.replace(/\s+/g, "-").toLowerCase()}-chart.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast(t("worship.pdfReady", language));
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : "PDF failed");
-    } finally {
-      setExporting(false);
-    }
+  const openPrint = (mode: "original" | "override") => {
+    const url = `/worship/${event.id}/print?key=${mode}`;
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -186,14 +124,24 @@ export function EventDetail({
             type="button"
             variant="secondary"
             className="min-h-11"
-            disabled={items.length === 0 || exporting}
-            onClick={() => void exportPdf()}
+            disabled={items.length === 0}
+            onClick={() => openPrint("original")}
           >
             <Download className="h-4 w-4" />
-            {exporting
-              ? t("worship.exporting", language)
-              : t("worship.exportPdf", language)}
+            {t("worship.exportOriginalKey", language)}
           </Button>
+          {hasKeyOverride ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11"
+              disabled={items.length === 0}
+              onClick={() => openPrint("override")}
+            >
+              <Download className="h-4 w-4" />
+              {t("worship.exportOverrideKey", language)}
+            </Button>
+          ) : null}
         </div>
       </header>
 

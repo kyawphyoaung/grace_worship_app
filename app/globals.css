@@ -117,6 +117,34 @@
     }
   }
 
+  @media print {
+    @page {
+      margin: 14mm 12mm;
+    }
+
+    body {
+      background: #fff !important;
+      background-image: none !important;
+      color: #111 !important;
+    }
+
+    .print-toolbar {
+      display: none !important;
+    }
+
+    .print-chart {
+      color: #111 !important;
+    }
+
+    .print-chords span {
+      color: #111 !important;
+    }
+
+    .print-chords .chord-label {
+      color: #0f766e !important;
+    }
+  }
+
   .animate-heart-float {
     animation: heart-float 0.9s ease-out forwards;
   }

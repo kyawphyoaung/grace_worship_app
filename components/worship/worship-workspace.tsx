@@ -22,6 +22,7 @@ type MinistryReflection =
 export function WorshipWorkspace({
   language,
   userId,
+  initialEventId = null,
   songs,
   sections,
   events,
@@ -33,6 +34,7 @@ export function WorshipWorkspace({
 }: {
   language: Language;
   userId: string;
+  initialEventId?: string | null;
   songs: Song[];
   sections: SongSection[];
   events: EventRow[];
@@ -43,7 +45,9 @@ export function WorshipWorkspace({
   reflections: MinistryReflection[];
 }) {
   const [libraryOpen, setLibraryOpen] = useState(false);
-  const [activeEventId, setActiveEventId] = useState<string | null>(null);
+  const [activeEventId, setActiveEventId] = useState<string | null>(
+    initialEventId,
+  );
 
   const songsById = useMemo(() => {
     const map = new Map<string, Song>();

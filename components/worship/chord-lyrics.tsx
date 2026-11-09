@@ -57,7 +57,7 @@ export function ChordLyrics({
                   key={i}
                   className="inline-flex flex-col items-start whitespace-pre-wrap"
                 >
-                  <span className="mb-0.5 text-[12px] font-bold leading-none text-primary">
+                  <span className="chord-label mb-0.5 text-[12px] font-bold leading-none text-primary">
                     {seg.chord || "\u00A0"}
                   </span>
                   <span className="leading-tight">{seg.text || "\u00A0"}</span>

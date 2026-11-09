@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
+import { Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { t, type Language } from "@/lib/i18n";
 import { useToast } from "@/components/ui/toast";
@@ -136,6 +137,43 @@ export function EventFeed({
     if (kind === "prayer") return t("worship.postTypePrayer", language);
     if (kind === "feedback") return t("worship.postTypeFeedback", language);
     return t("worship.postTypeReflection", language);
+  };
+
+  const deletePost = (post: FeedPost) => {
+    if (post.authorId !== userId) return;
+    if (!window.confirm(t("feed.deletePostConfirm", language))) return;
+    startTransition(async () => {
+      const supabase = createClient();
+      let errorMessage: string | null = null;
+      if (post.kind === "prayer") {
+        const { error } = await supabase
+          .from("event_prayers")
+          .delete()
+          .eq("id", post.id)
+          .eq("from_user_id", userId);
+        errorMessage = error?.message ?? null;
+      } else if (post.kind === "feedback") {
+        const { error } = await supabase
+          .from("event_feedback")
+          .delete()
+          .eq("id", post.id)
+          .eq("from_user_id", userId);
+        errorMessage = error?.message ?? null;
+      } else {
+        const { error } = await supabase
+          .from("ministry_reflections")
+          .delete()
+          .eq("id", post.id)
+          .eq("user_id", userId);
+        errorMessage = error?.message ?? null;
+      }
+      if (errorMessage) {
+        showToast(errorMessage);
+        return;
+      }
+      showToast(t("worship.saved", language));
+      router.refresh();
+    });
   };
 
   const openComposer = () => {
@@ -272,22 +310,37 @@ export function EventFeed({
                     size={40}
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-semibold">{name}</p>
-                      <span
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                          BADGE[post.kind],
-                        )}
-                      >
-                        {kindLabel(post.kind)}
-                      </span>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold">{name}</p>
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                              BADGE[post.kind],
+                            )}
+                          >
+                            {kindLabel(post.kind)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(post.created_at), {
+                            addSuffix: true,
+                          })}
+                        </p>
+                      </div>
+                      {post.authorId === userId ? (
+                        <button
+                          type="button"
+                          aria-label={t("common.delete", language)}
+                          disabled={pending}
+                          onClick={() => deletePost(post)}
+                          className="flex min-h-9 min-w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground/70 transition hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      ) : null}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(post.created_at), {
-                        addSuffix: true,
-                      })}
-                    </p>
                     {post.content ? (
                       <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">
                         {post.content}

@@ -8,7 +8,12 @@ import { redirect } from "next/navigation";
 
 export const instant = false;
 
-export default async function WorshipPage() {
+export default async function WorshipPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ event?: string }>;
+}) {
+  const { event: eventParam } = await searchParams;
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/auth/login");
 
@@ -51,6 +56,7 @@ export default async function WorshipPage() {
     <WorshipWorkspace
       language={language}
       userId={user.id}
+      initialEventId={eventParam ?? null}
       songs={songs ?? []}
       sections={sections ?? []}
       events={events ?? []}

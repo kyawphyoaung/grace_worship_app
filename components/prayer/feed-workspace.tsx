@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, ListFilter, MessageCircle, Send } from "lucide-react";
+import { Heart, ListFilter, MessageCircle, Search, Send, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { t, tf, type Language } from "@/lib/i18n";
 import { Modal } from "@/components/ui/modal";
@@ -26,7 +26,7 @@ type FeedItem =
   | { kind: "gratitude"; created_at: string; data: Entry };
 
 type PostType = "prayer" | "gratitude";
-type FilterValue = "all" | "pending" | "answered" | "shared" | "private";
+type FilterValue = "all" | "shared" | "private";
 
 export function FeedWorkspace({
   language,
@@ -51,6 +51,8 @@ export function FeedWorkspace({
   const [composerOpen, setComposerOpen] = useState(false);
   const [filter, setFilter] = useState<FilterValue>("all");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const [postType, setPostType] = useState<PostType>("prayer");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -78,25 +80,32 @@ export function FeedWorkspace({
   }, [prayers, gratitudeEntries]);
 
   const visible = useMemo(() => {
+    let list = feed;
     switch (filter) {
-      case "pending":
-        return feed.filter(
-          (i) => i.kind === "prayer" && i.data.status === "pending",
-        );
-      case "answered":
-        return feed.filter(
-          (i) => i.kind === "prayer" && i.data.status === "answered",
-        );
       case "shared":
-        return feed.filter((i) => i.data.is_shared);
+        list = feed.filter((i) => i.data.is_shared);
+        break;
       case "private":
-        return feed.filter(
+        list = feed.filter(
           (i) => !i.data.is_shared && i.data.user_id === userId,
         );
+        break;
       default:
-        return feed;
+        break;
     }
-  }, [feed, filter, userId]);
+
+    const q = query.trim().toLowerCase();
+    if (!q) return list;
+
+    return list.filter((item) => {
+      const created = item.created_at.slice(0, 10);
+      const hay =
+        item.kind === "prayer"
+          ? `${item.data.title} ${item.data.content} ${created}`
+          : `${item.data.content} ${created} ${item.data.entry_date ?? ""}`;
+      return hay.toLowerCase().includes(q);
+    });
+  }, [feed, filter, userId, query]);
 
   const reactionsByKey = useMemo(() => {
     const map = new Map<string, Reaction[]>();
@@ -132,10 +141,6 @@ export function FeedWorkspace({
 
   const filterLabel = (value: FilterValue) => {
     switch (value) {
-      case "pending":
-        return t("prayer.filterPending", language);
-      case "answered":
-        return t("prayer.filterAnswered", language);
       case "shared":
         return t("prayer.filterShared", language);
       case "private":
@@ -143,6 +148,26 @@ export function FeedWorkspace({
       default:
         return t("prayer.filterAll", language);
     }
+  };
+
+  const deletePost = (kind: "prayer" | "gratitude", id: string) => {
+    if (!window.confirm(t("feed.deletePostConfirm", language))) return;
+    startTransition(async () => {
+      const supabase = createClient();
+      const { error } =
+        kind === "prayer"
+          ? await supabase.from("prayers").delete().eq("id", id).eq("user_id", userId)
+          : await supabase
+              .from("gratitude_entries")
+              .delete()
+              .eq("id", id)
+              .eq("user_id", userId);
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
+      router.refresh();
+    });
   };
 
   const openComposer = () => {
@@ -286,6 +311,21 @@ export function FeedWorkspace({
           </span>
         </button>
 
+        <button
+          type="button"
+          aria-label={t("common.search", language)}
+          aria-expanded={searchOpen}
+          onClick={() => setSearchOpen((v) => !v)}
+          className={cn(
+            "flex min-h-11 min-w-11 items-center justify-center rounded-xl border text-foreground",
+            searchOpen || query
+              ? "border-primary/40 bg-primary/15 text-primary"
+              : "border-primary/25 bg-gradient-to-br from-card to-primary/15",
+          )}
+        >
+          <Search className="h-4 w-4" />
+        </button>
+
         <div className="relative shrink-0">
           <button
             type="button"
@@ -309,37 +349,54 @@ export function FeedWorkspace({
                 onClick={() => setFilterOpen(false)}
               />
               <div className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-border bg-popover p-1 shadow-xl">
-                {(
-                  [
-                    "all",
-                    "pending",
-                    "answered",
-                    "shared",
-                    "private",
-                  ] as FilterValue[]
-                ).map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => {
-                      setFilter(value);
-                      setFilterOpen(false);
-                    }}
-                    className={cn(
-                      "flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm transition",
-                      filter === value
-                        ? "bg-primary/15 font-medium text-primary"
-                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-                    )}
-                  >
-                    {filterLabel(value)}
-                  </button>
-                ))}
+                {(["all", "shared", "private"] as FilterValue[]).map(
+                  (value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => {
+                        setFilter(value);
+                        setFilterOpen(false);
+                      }}
+                      className={cn(
+                        "flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm transition",
+                        filter === value
+                          ? "bg-primary/15 font-medium text-primary"
+                          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                      )}
+                    >
+                      {filterLabel(value)}
+                    </button>
+                  ),
+                )}
               </div>
             </>
           ) : null}
         </div>
       </div>
+
+      {searchOpen ? (
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t("feed.searchPlaceholder", language)}
+            className="min-h-11 pl-9 pr-10"
+            autoFocus
+          />
+          {query ? (
+            <button
+              type="button"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground hover:bg-muted"
+              onClick={() => setQuery("")}
+              aria-label={t("common.close", language)}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {message ? (
         <p className="rounded-lg bg-primary/15 px-3 py-2 text-sm text-primary">
@@ -423,18 +480,31 @@ export function FeedWorkspace({
                         )}
                       </p>
                     </div>
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                        item.kind === "prayer"
-                          ? "bg-fuchsia-500/20 text-fuchsia-200"
-                          : "bg-amber-500/20 text-amber-200",
-                      )}
-                    >
-                      {item.kind === "prayer"
-                        ? t("feed.typePrayer", language)
-                        : t("feed.typeGratitude", language)}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                          item.kind === "prayer"
+                            ? "bg-fuchsia-500/20 text-fuchsia-200"
+                            : "bg-amber-500/20 text-amber-200",
+                        )}
+                      >
+                        {item.kind === "prayer"
+                          ? t("feed.typePrayer", language)
+                          : t("feed.typeGratitude", language)}
+                      </span>
+                      {isMine ? (
+                        <button
+                          type="button"
+                          aria-label={t("common.delete", language)}
+                          disabled={pending}
+                          onClick={() => deletePost(entityType, entityId)}
+                          className="flex min-h-9 min-w-9 items-center justify-center rounded-lg text-muted-foreground/70 transition hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
 
                   {item.kind === "prayer" ? (

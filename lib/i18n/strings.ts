@@ -210,6 +210,17 @@ export const strings = {
     preview: { en: "Preview", mm: "ကြိုကြည့်" },
     exitRehearsal: { en: "Exit rehearsal", mm: "လေ့ကျင့်မှုမှ ထွက်ရန်" },
     exportPdf: { en: "Export PDF", mm: "PDF ထုတ်ရန်" },
+    exportOriginalKey: {
+      en: "Export Original Key",
+      mm: "မူလသော့ ထုတ်ရန်",
+    },
+    exportOverrideKey: {
+      en: "Export Overridden Key",
+      mm: "ပြောင်းထားသောသော့ ထုတ်ရန်",
+    },
+    originalKeysLabel: { en: "Original keys", mm: "မူလသော့များ" },
+    overrideKeysLabel: { en: "Overridden keys", mm: "ပြောင်းထားသောသော့များ" },
+    print: { en: "Print", mm: "ပုံနှိပ်ရန်" },
     exporting: { en: "Building PDF…", mm: "PDF ဖန်တီးနေသည်…" },
     pdfReady: { en: "PDF downloaded.", mm: "PDF ဒေါင်းလုဒ်ပြီးပါပြီ။" },
     songsCount: { en: "{n} songs", mm: "သီချင်း {n} ပုဒ်" },
@@ -276,6 +287,7 @@ export const strings = {
       en: "{m} monthsaries · {a} anniversaries",
       mm: "လပတ်သစ် {m} ကြိမ် · နှစ်ပတ်လည် {a} ကြိမ်",
     },
+    upcomingEvents: { en: "Upcoming events", mm: "လာမည့်ပွဲများ" },
   },
   bible: {
     title: { en: "Bible", mm: "ကျမ်းစာ" },
@@ -450,6 +462,14 @@ export const strings = {
     empty: {
       en: "No posts yet. Share a prayer or gratitude.",
       mm: "ပို့စ် မရှိသေးပါ။ ဆုတောင်း သို့မဟုတ် ကျေးဇူးတင်ချက် မျှဝေပါ။",
+    },
+    searchPlaceholder: {
+      en: "Search by text or date…",
+      mm: "စာသား သို့မဟုတ် နေ့ရက် ရှာရန်…",
+    },
+    deletePostConfirm: {
+      en: "Delete this post?",
+      mm: "ဤပို့စ်ကို ဖျက်မလား?",
     },
   },
   gratitude: {

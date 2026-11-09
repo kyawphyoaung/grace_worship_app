@@ -4,6 +4,7 @@ import {
   getCurrentUser,
   profileLanguage,
 } from "@/lib/auth/profile";
+import { format } from "date-fns";
 import { redirect } from "next/navigation";
 
 export const instant = false;
@@ -14,14 +15,23 @@ export default async function HomePage() {
 
   const profile = await ensureProfile(supabase, user.id, user.email);
   const language = profileLanguage(profile);
+  const today = format(new Date(), "yyyy-MM-dd");
 
-  const { data: myLatest } = await supabase
-    .from("bible_study_sessions")
-    .select("book_id, chapter, session_date, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [{ data: myLatest }, { data: upcomingEvents }] = await Promise.all([
+    supabase
+      .from("bible_study_sessions")
+      .select("book_id, chapter, session_date, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("events")
+      .select("id, event_name, event_date, event_type, role")
+      .gte("event_date", today)
+      .order("event_date", { ascending: true })
+      .limit(8),
+  ]);
 
   let continueSession: {
     book_id: string;
@@ -78,6 +88,7 @@ export default async function HomePage() {
           ? { bookId: genesis.id, nameEn: genesis.name_en, nameMm: genesis.name_mm }
           : null
       }
+      upcomingEvents={upcomingEvents ?? []}
     />
   );
 }

@@ -10,9 +10,10 @@
 - Phase 2.8 — Feed filters, mobile notification popup, love/comment rules, bible tab split (migration 008)
 - Phase 3 — Worship library, events, setlists, rehearsal preview, PDF export
 - Phase 3.1 — Chord transpose, PDF Myanmar font, worship UI overhaul (migration 009)
+- Phase 3.2 — HTML print export, event feed notifications, home upcoming events, feed deletions (migration 010)
 
 ## Next up
-- Apply migrations 008–009 (`supabase db push`) after owner review if not yet applied
+- Apply migrations 008–010 (`supabase db push`) after owner review if not yet applied
 - Phase 4 — Tracking, PWA, deploy
 
 ## Locked decisions
@@ -23,6 +24,7 @@
 - Settings page (`/settings`): UI language + display name + prayer reminder
 - Prayer tab: unified social feed (prayer + gratitude) with love + comments
 - Worship: Events are the main view; Song Library opens from music-note header button
+- Worship charts: browser print route `/worship/[eventId]/print` (not @react-pdf/renderer)
 - Partner Prayer on events: only the non-owner partner can create
 - Login-only auth; signup disabled
 - Migrations: supabase migration new + db push only
@@ -38,4 +40,5 @@ npm run dev · npm run seed:bible · npm run seed:bible:chin · npm run seed:bib
 profiles (+preferred_bible_languages), partners, bible_books (+name_chin), bible_verses (+text_chin, +text_kjv), bible_study_sessions, bible_study_notes, bible_favorites, prayers (+recipient_id), prayer_interactions, gratitude_entries (+recipient_id), notifications, feed_reactions, feed_comments, songs (+time_signature), song_sections (+pre_chorus), events, setlists, setlist_items, event_prayers, event_feedback, ministry_reflections
 
 ## Migrations
-001–007 applied · 008_feed_interaction_notifications · 009_worship_phase_3_1 (pre_chorus + time_signature) — push after review
+001–007 applied · 008–010 pending push after review
+(008 feed interactions · 009 worship pre_chorus/time_signature · 010 event feed notifications)
