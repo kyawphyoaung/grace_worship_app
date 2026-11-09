@@ -31,12 +31,17 @@ export type MusicKey = (typeof MUSIC_KEYS)[number];
 export const SECTION_TYPES = [
   "intro",
   "verse",
+  "pre_chorus",
   "chorus",
   "bridge",
   "outro",
 ] as const;
 
 export type SectionType = (typeof SECTION_TYPES)[number];
+
+export const TIME_SIGNATURES = ["4/4", "3/4", "6/8"] as const;
+
+export type TimeSignature = (typeof TIME_SIGNATURES)[number];
 
 export const EVENT_TYPES = [
   "sunday",
@@ -69,18 +74,30 @@ export function defaultSectionLabel(
   const base =
     type === "intro"
       ? "Intro"
-      : type === "chorus"
-        ? "Chorus"
-        : type === "bridge"
-          ? "Bridge"
-          : type === "outro"
-            ? "Outro"
-            : "Verse";
+      : type === "pre_chorus"
+        ? "Pre-Chorus"
+        : type === "chorus"
+          ? "Chorus"
+          : type === "bridge"
+            ? "Bridge"
+            : type === "outro"
+              ? "Outro"
+              : "Verse";
 
-  if (type === "verse" || type === "chorus" || type === "bridge") {
+  if (
+    type === "verse" ||
+    type === "chorus" ||
+    type === "bridge" ||
+    type === "pre_chorus"
+  ) {
     let n = 1;
     while (existingLabels.includes(`${base} ${n}`)) n += 1;
-    return `${base} ${n}`;
+    // Pre-Chorus / Chorus / Bridge often don't need numbers on first
+    if (n === 1 && type !== "verse") {
+      if (!existingLabels.includes(base)) return base;
+    }
+    if (type === "verse") return `${base} ${n}`;
+    return n === 1 ? base : `${base} ${n}`;
   }
 
   if (existingLabels.includes(base)) {
@@ -99,4 +116,12 @@ export function songTitle(
     return song.title_mm?.trim() || song.title_en?.trim() || "Untitled";
   }
   return song.title_en?.trim() || song.title_mm?.trim() || "Untitled";
+}
+
+export function songTimeSignature(
+  song: { time_signature?: string | null },
+): TimeSignature {
+  const value = song.time_signature;
+  if (value === "3/4" || value === "6/8" || value === "4/4") return value;
+  return "4/4";
 }

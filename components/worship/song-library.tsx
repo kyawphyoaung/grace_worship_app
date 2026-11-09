@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { SongForm } from "@/components/worship/song-form";
-import { songTitle } from "@/lib/worship/constants";
+import { songTimeSignature, songTitle } from "@/lib/worship/constants";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database";
 
@@ -188,6 +188,9 @@ export function SongLibrary({
                             {song.bpm} {t("worship.bpm", language)}
                           </Badge>
                         ) : null}
+                        <Badge variant="outline" className="font-normal">
+                          {songTimeSignature(song)}
+                        </Badge>
                       </div>
                       {(song.tags ?? []).length > 0 ? (
                         <div className="mt-2 flex flex-wrap gap-1.5">

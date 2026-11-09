@@ -1,27 +1,25 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { ArrowLeft, Download, Play, Sparkles } from "lucide-react";
+import { ArrowLeft, Download, Play } from "lucide-react";
 import { pdf } from "@react-pdf/renderer";
-import { createClient } from "@/lib/supabase/client";
-import { t, tf, type Language } from "@/lib/i18n";
+import { t, type Language } from "@/lib/i18n";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useCouple } from "@/components/couple-provider";
 import {
   SetlistPlanner,
   type SetlistItemView,
 } from "@/components/worship/setlist-planner";
 import { RehearsalMode } from "@/components/worship/rehearsal-mode";
+import { EventFeed } from "@/components/worship/event-feed";
 import {
   EventChartDocument,
+  ensurePdfFonts,
   type PdfSongItem,
 } from "@/lib/pdf/event-chart";
-import { cn } from "@/lib/utils";
+import { songTimeSignature } from "@/lib/worship/constants";
+import { transposeLyrics } from "@/lib/music/transpose";
 import type { Database } from "@/types/database";
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
@@ -58,30 +56,10 @@ export function EventDetail({
   reflections: MinistryReflection[];
   onBack: () => void;
 }) {
-  const router = useRouter();
   const { showToast } = useToast();
-  const { partner, partnerName, myName } = useCouple();
-  const [pending, startTransition] = useTransition();
   const [rehearsal, setRehearsal] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  const [prayerNote, setPrayerNote] = useState("");
-  const [feedbackNote, setFeedbackNote] = useState("");
-  const myReflection = reflections.find((r) => r.user_id === userId) ?? null;
-  const sharedPartnerReflection = reflections.find(
-    (r) => r.user_id !== userId && r.is_shared,
-  );
-  const [reflection, setReflection] = useState(
-    myReflection?.post_service_reflection ?? "",
-  );
-  const [gratitude, setGratitude] = useState(
-    myReflection?.serving_gratitude ?? "",
-  );
-  const [shareReflection, setShareReflection] = useState(
-    myReflection?.is_shared ?? false,
-  );
-
-  const isOwner = event.user_id === userId;
   const sectionsBySong = useMemo(() => {
     const map = new Map<string, SongSection[]>();
     for (const s of sections) {
@@ -111,103 +89,45 @@ export function EventDetail({
     }
   };
 
-  const savePrayer = () => {
-    if (!prayerNote.trim()) return;
-    startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase.from("event_prayers").insert({
-        event_id: event.id,
-        from_user_id: userId,
-        note: prayerNote.trim(),
-      });
-      if (error) {
-        showToast(error.message);
-        return;
-      }
-      setPrayerNote("");
-      showToast(t("worship.saved", language));
-      router.refresh();
-    });
-  };
-
-  const saveFeedback = () => {
-    if (!feedbackNote.trim() || !partner) return;
-    startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase.from("event_feedback").insert({
-        event_id: event.id,
-        from_user_id: userId,
-        to_user_id: partner.id,
-        note: feedbackNote.trim(),
-      });
-      if (error) {
-        showToast(error.message);
-        return;
-      }
-      setFeedbackNote("");
-      showToast(t("worship.saved", language));
-      router.refresh();
-    });
-  };
-
-  const saveReflection = () => {
-    startTransition(async () => {
-      const supabase = createClient();
-      const payload = {
-        event_id: event.id,
-        user_id: userId,
-        post_service_reflection: reflection.trim() || null,
-        serving_gratitude: gratitude.trim() || null,
-        is_shared: shareReflection,
-      };
-      const { error } = myReflection
-        ? await supabase
-            .from("ministry_reflections")
-            .update(payload)
-            .eq("id", myReflection.id)
-        : await supabase.from("ministry_reflections").insert(payload);
-      if (error) {
-        showToast(error.message);
-        return;
-      }
-      showToast(t("worship.saved", language));
-      router.refresh();
-    });
-  };
-
   const exportPdf = async () => {
     setExporting(true);
     try {
-      const pdfItems: PdfSongItem[] = items.map((item) => ({
-        position: item.position,
-        key: item.key_override || item.song.default_key,
-        transition_note: item.transition_note,
-        song: {
-          title_en: item.song.title_en,
-          title_mm: item.song.title_mm,
-          author: item.song.author,
-          default_key: item.song.default_key,
-          bpm: item.song.bpm,
-        },
-        sections: [...(sectionsBySong.get(item.song_id) ?? [])]
-          .sort((a, b) => a.section_order - b.section_order)
-          .map((s) => ({
-            label: s.label,
-            section_type: s.section_type,
-            lyrics_mm: s.lyrics_mm,
-            lyrics_en: s.lyrics_en,
-            notes: s.notes,
-          })),
-      }));
+      ensurePdfFonts();
+      const pdfItems: PdfSongItem[] = items.map((item) => {
+        const fromKey = item.song.default_key || "C";
+        const toKey = item.key_override || fromKey;
+        return {
+          position: item.position,
+          key: toKey,
+          time_signature: songTimeSignature(item.song),
+          transition_note: item.transition_note,
+          song: {
+            title_en: item.song.title_en,
+            title_mm: item.song.title_mm,
+            author: item.song.author,
+            default_key: item.song.default_key,
+            bpm: item.song.bpm,
+          },
+          sections: [...(sectionsBySong.get(item.song_id) ?? [])]
+            .sort((a, b) => a.section_order - b.section_order)
+            .map((s) => ({
+              label: s.label,
+              section_type: s.section_type,
+              lyrics_mm: s.lyrics_mm
+                ? transposeLyrics(s.lyrics_mm, fromKey, toKey)
+                : null,
+              lyrics_en: s.lyrics_en
+                ? transposeLyrics(s.lyrics_en, fromKey, toKey)
+                : null,
+            })),
+        };
+      });
 
       const blob = await pdf(
         <EventChartDocument
           event={{
             event_name: event.event_name,
             event_date: event.event_date,
-            event_type: event.event_type,
-            role: event.role,
-            notes: event.notes,
           }}
           items={pdfItems}
         />,
@@ -226,9 +146,6 @@ export function EventDetail({
       setExporting(false);
     }
   };
-
-  const nameFor = (id: string) =>
-    id === userId ? myName : partnerName;
 
   return (
     <div className="space-y-5">
@@ -289,158 +206,14 @@ export function EventDetail({
         songs={songs}
       />
 
-      <section className="space-y-3 rounded-3xl border border-fuchsia-400/20 bg-gradient-to-br from-card to-fuchsia-950/20 p-4">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-fuchsia-300" />
-          <h3 className="font-semibold">{t("worship.partnerPrayer", language)}</h3>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {t("worship.partnerPrayerHint", language)}
-        </p>
-        {!isOwner || partner ? (
-          <div className="space-y-2">
-            <textarea
-              value={prayerNote}
-              onChange={(e) => setPrayerNote(e.target.value)}
-              rows={3}
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              placeholder={t("worship.writePrayer", language)}
-            />
-            <Button
-              type="button"
-              className="min-h-11"
-              disabled={pending || !prayerNote.trim()}
-              onClick={savePrayer}
-            >
-              {t("worship.writePrayer", language)}
-            </Button>
-          </div>
-        ) : null}
-        <ul className="space-y-2">
-          {prayers.length === 0 ? (
-            <li className="text-sm text-muted-foreground">
-              {t("worship.noPartnerPrayers", language)}
-            </li>
-          ) : (
-            prayers.map((p) => (
-              <li
-                key={p.id}
-                className="rounded-xl border border-border/70 bg-muted/30 px-3 py-2"
-              >
-                <p className="text-xs text-muted-foreground">
-                  {tf("worship.prayerFrom", language, {
-                    name: nameFor(p.from_user_id),
-                  })}
-                </p>
-                <p className="mt-1 text-sm whitespace-pre-wrap">{p.note}</p>
-              </li>
-            ))
-          )}
-        </ul>
-      </section>
-
-      <section className="space-y-3 rounded-3xl border border-teal-400/20 bg-gradient-to-br from-card to-teal-950/20 p-4">
-        <h3 className="font-semibold">{t("worship.postService", language)}</h3>
-
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label>{t("worship.ministryReflection", language)}</Label>
-            <textarea
-              value={reflection}
-              onChange={(e) => setReflection(e.target.value)}
-              rows={3}
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>{t("worship.servingGratitude", language)}</Label>
-            <textarea
-              value={gratitude}
-              onChange={(e) => setGratitude(e.target.value)}
-              rows={2}
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            />
-          </div>
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox
-              checked={shareReflection}
-              onCheckedChange={(v) => setShareReflection(Boolean(v))}
-            />
-            {t("worship.shareReflection", language)}
-          </label>
-          <Button
-            type="button"
-            className="min-h-11"
-            disabled={pending}
-            onClick={saveReflection}
-          >
-            {t("common.save", language)}
-          </Button>
-        </div>
-
-        {sharedPartnerReflection ? (
-          <div className="rounded-xl border border-primary/25 bg-primary/5 px-3 py-2">
-            <p className="text-xs text-muted-foreground">
-              {tf("worship.prayerFrom", language, { name: partnerName })} ·{" "}
-              {t("worship.ministryReflection", language)}
-            </p>
-            {sharedPartnerReflection.post_service_reflection ? (
-              <p className="mt-1 text-sm whitespace-pre-wrap">
-                {sharedPartnerReflection.post_service_reflection}
-              </p>
-            ) : null}
-            {sharedPartnerReflection.serving_gratitude ? (
-              <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                {sharedPartnerReflection.serving_gratitude}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-
-        <div className={cn("space-y-2 border-t border-border/50 pt-3")}>
-          <h4 className="text-sm font-semibold">
-            {t("worship.eventFeedback", language)}
-          </h4>
-          <p className="text-sm text-muted-foreground">
-            {t("worship.feedbackHint", language)}
-          </p>
-          {partner ? (
-            <>
-              <textarea
-                value={feedbackNote}
-                onChange={(e) => setFeedbackNote(e.target.value)}
-                rows={3}
-                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                placeholder={t("worship.writeFeedback", language)}
-              />
-              <Button
-                type="button"
-                variant="secondary"
-                className="min-h-11"
-                disabled={pending || !feedbackNote.trim()}
-                onClick={saveFeedback}
-              >
-                {t("worship.writeFeedback", language)}
-              </Button>
-            </>
-          ) : null}
-          <ul className="space-y-2">
-            {feedback.map((f) => (
-              <li
-                key={f.id}
-                className="rounded-xl border border-border/70 bg-muted/30 px-3 py-2"
-              >
-                <p className="text-xs text-muted-foreground">
-                  {tf("worship.feedbackFrom", language, {
-                    name: nameFor(f.from_user_id),
-                  })}
-                </p>
-                <p className="mt-1 text-sm whitespace-pre-wrap">{f.note}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+      <EventFeed
+        language={language}
+        userId={userId}
+        event={event}
+        prayers={prayers}
+        feedback={feedback}
+        reflections={reflections}
+      />
 
       <RehearsalMode
         language={language}

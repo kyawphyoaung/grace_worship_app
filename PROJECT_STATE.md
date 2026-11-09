@@ -8,10 +8,11 @@
 - Phase 2.6 (d84de75) — KJV versions, sharing RLS fix, notifications, warm UI (migration 006)
 - Phase 2.7 (8e108c2) — Facebook-style feed, settings page, colorful UI, bible layout (migration 007)
 - Phase 2.8 — Feed filters, mobile notification popup, love/comment rules, bible tab split (migration 008)
-- Phase 3 — Worship library, events, setlists, rehearsal preview, PDF export (tables from migration 003)
+- Phase 3 — Worship library, events, setlists, rehearsal preview, PDF export
+- Phase 3.1 — Chord transpose, PDF Myanmar font, worship UI overhaul (migration 009)
 
 ## Next up
-- Apply migration 008 (`supabase db push`) after owner review (if not yet applied)
+- Apply migrations 008–009 (`supabase db push`) after owner review if not yet applied
 - Phase 4 — Tracking, PWA, deploy
 
 ## Locked decisions
@@ -21,6 +22,8 @@
 - Top bar: notification bell + avatar menu (Settings / Log out). No couple pill / language toggle in header.
 - Settings page (`/settings`): UI language + display name + prayer reminder
 - Prayer tab: unified social feed (prayer + gratitude) with love + comments
+- Worship: Events are the main view; Song Library opens from music-note header button
+- Partner Prayer on events: only the non-owner partner can create
 - Login-only auth; signup disabled
 - Migrations: supabase migration new + db push only
 - Packages allowed: @dnd-kit/core, @dnd-kit/sortable, @react-pdf/renderer, date-fns
@@ -32,7 +35,7 @@
 npm run dev · npm run seed:bible · npm run seed:bible:chin · npm run seed:bible:kjv · supabase migration new \<n\> · supabase db push · supabase gen types typescript
 
 ## Tables
-profiles (+preferred_bible_languages), partners, bible_books (+name_chin), bible_verses (+text_chin, +text_kjv), bible_study_sessions, bible_study_notes, bible_favorites, prayers (+recipient_id), prayer_interactions, gratitude_entries (+recipient_id), notifications, feed_reactions, feed_comments, songs, song_sections, events, setlists, setlist_items, event_prayers, event_feedback, ministry_reflections
+profiles (+preferred_bible_languages), partners, bible_books (+name_chin), bible_verses (+text_chin, +text_kjv), bible_study_sessions, bible_study_notes, bible_favorites, prayers (+recipient_id), prayer_interactions, gratitude_entries (+recipient_id), notifications, feed_reactions, feed_comments, songs (+time_signature), song_sections (+pre_chorus), events, setlists, setlist_items, event_prayers, event_feedback, ministry_reflections
 
 ## Migrations
-001–007 applied · 008_feed_interaction_notifications (pending push unless already applied)
+001–007 applied · 008_feed_interaction_notifications · 009_worship_phase_3_1 (pre_chorus + time_signature) — push after review

@@ -2,7 +2,8 @@
 
 import { X } from "lucide-react";
 import { t, type Language } from "@/lib/i18n";
-import { songTitle } from "@/lib/worship/constants";
+import { songTimeSignature, songTitle } from "@/lib/worship/constants";
+import { ChordLyrics } from "@/components/worship/chord-lyrics";
 import type { Database } from "@/types/database";
 import type { SetlistItemView } from "@/components/worship/setlist-planner";
 
@@ -52,7 +53,9 @@ export function RehearsalMode({
             (a, b) => a.section_order - b.section_order,
           );
           const title = songTitle(item.song, language === "mm" ? "mm" : "en");
-          const key = item.key_override || item.song.default_key;
+          const fromKey = item.song.default_key || "C";
+          const toKey = item.key_override || fromKey;
+          const timeSig = songTimeSignature(item.song);
 
           return (
             <article key={item.id} className="space-y-5">
@@ -65,11 +68,10 @@ export function RehearsalMode({
                 </h2>
                 <div className="mt-1 flex flex-wrap gap-3 text-sm text-muted-foreground">
                   {item.song.author ? <span>{item.song.author}</span> : null}
-                  {key ? (
-                    <span>
-                      {t("worship.key", language)} {key}
-                    </span>
-                  ) : null}
+                  <span>
+                    {t("worship.key", language)} {toKey}
+                  </span>
+                  <span>{timeSig}</span>
                   {item.song.bpm != null ? (
                     <span>
                       {item.song.bpm} {t("worship.bpm", language)}
@@ -89,9 +91,12 @@ export function RehearsalMode({
                         <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-teal-300/90">
                           MM
                         </p>
-                        <p className="whitespace-pre-wrap text-base leading-relaxed mm-text text-foreground">
-                          {section.lyrics_mm}
-                        </p>
+                        <ChordLyrics
+                          lyrics={section.lyrics_mm}
+                          fromKey={fromKey}
+                          toKey={toKey}
+                          mm
+                        />
                       </div>
                     ) : null}
                     {section.lyrics_en ? (
@@ -99,9 +104,11 @@ export function RehearsalMode({
                         <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-fuchsia-300/90">
                           EN
                         </p>
-                        <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
-                          {section.lyrics_en}
-                        </p>
+                        <ChordLyrics
+                          lyrics={section.lyrics_en}
+                          fromKey={fromKey}
+                          toKey={toKey}
+                        />
                       </div>
                     ) : null}
                   </div>

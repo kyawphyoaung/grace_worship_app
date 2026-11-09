@@ -752,6 +752,7 @@ export type Database = {
           last_sung_date: string | null
           tags: string[]
           tempo: string | null
+          time_signature: string
           times_sung: number
           title_en: string | null
           title_mm: string | null
@@ -767,6 +768,7 @@ export type Database = {
           last_sung_date?: string | null
           tags?: string[]
           tempo?: string | null
+          time_signature?: string
           times_sung?: number
           title_en?: string | null
           title_mm?: string | null
@@ -782,6 +784,7 @@ export type Database = {
           last_sung_date?: string | null
           tags?: string[]
           tempo?: string | null
+          time_signature?: string
           times_sung?: number
           title_en?: string | null
           title_mm?: string | null

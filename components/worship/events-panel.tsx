@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
 import { Segmented } from "@/components/ui/segmented";
+import { PickerSheet } from "@/components/ui/picker-sheet";
 import {
   EVENT_ROLES,
   EVENT_TYPES,
@@ -209,14 +210,21 @@ export function EventsPanel({
           <ul className="space-y-3">
             {sorted.map((event) => (
               <li key={event.id}>
-                <button
-                  type="button"
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onOpenEvent(event.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onOpenEvent(event.id);
+                    }
+                  }}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     openEdit(event);
                   }}
-                  className="card-glow w-full rounded-2xl border border-primary/15 p-4 text-left transition hover:border-primary/35"
+                  className="card-glow w-full cursor-pointer rounded-2xl border border-primary/15 p-4 text-left transition hover:border-primary/35"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -248,7 +256,7 @@ export function EventsPanel({
                       </button>
                     </div>
                   </div>
-                </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -394,36 +402,26 @@ export function EventsPanel({
               className="min-h-11"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>{t("worship.eventType", language)}</Label>
-              <select
-                value={eventType}
-                onChange={(e) => setEventType(e.target.value as EventType)}
-                className="flex h-11 w-full rounded-md border border-input bg-transparent px-2 text-sm"
-              >
-                {EVENT_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {typeLabel(type)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>{t("worship.eventRole", language)}</Label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value as EventRole)}
-                className="flex h-11 w-full rounded-md border border-input bg-transparent px-2 text-sm"
-              >
-                {EVENT_ROLES.map((r) => (
-                  <option key={r} value={r}>
-                    {roleLabel(r)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+          <PickerSheet
+            label={t("worship.eventType", language)}
+            value={eventType}
+            onChange={(v) => setEventType(v as EventType)}
+            doneLabel={t("common.done", language)}
+            options={EVENT_TYPES.map((type) => ({
+              value: type,
+              label: typeLabel(type),
+            }))}
+          />
+          <PickerSheet
+            label={t("worship.eventRole", language)}
+            value={role}
+            onChange={(v) => setRole(v as EventRole)}
+            doneLabel={t("common.done", language)}
+            options={EVENT_ROLES.map((r) => ({
+              value: r,
+              label: roleLabel(r),
+            }))}
+          />
           <div className="space-y-1.5">
             <Label htmlFor="event-notes">{t("worship.eventNotes", language)}</Label>
             <textarea

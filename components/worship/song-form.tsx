@@ -9,20 +9,26 @@ import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PickerSheet } from "@/components/ui/picker-sheet";
+import { Segmented } from "@/components/ui/segmented";
 import {
   MUSIC_KEYS,
   SECTION_TYPES,
   TEMPO_OPTIONS,
+  TIME_SIGNATURES,
   defaultSectionLabel,
   tempoFromBpm,
   type SectionType,
   type TempoOption,
+  type TimeSignature,
 } from "@/lib/worship/constants";
+import { ChordLyrics } from "@/components/worship/chord-lyrics";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database";
 
 type Song = Database["public"]["Tables"]["songs"]["Row"];
 type SongSection = Database["public"]["Tables"]["song_sections"]["Row"];
+type SongLang = "en" | "mm";
 
 type DraftSection = {
   localId: string;
@@ -66,13 +72,25 @@ export function SongForm({
   const router = useRouter();
   const { showToast } = useToast();
   const [pending, startTransition] = useTransition();
+  const initialLang: SongLang =
+    song?.title_mm && !song?.title_en
+      ? "mm"
+      : song?.title_en
+        ? "en"
+        : language === "mm"
+          ? "mm"
+          : "en";
+  const [songLang, setSongLang] = useState<SongLang>(initialLang);
   const [titleEn, setTitleEn] = useState(song?.title_en ?? "");
   const [titleMm, setTitleMm] = useState(song?.title_mm ?? "");
   const [author, setAuthor] = useState(song?.author ?? "");
-  const [defaultKey, setDefaultKey] = useState(song?.default_key ?? "");
+  const [defaultKey, setDefaultKey] = useState(song?.default_key ?? "C");
   const [bpm, setBpm] = useState(song?.bpm != null ? String(song.bpm) : "");
   const [tempo, setTempo] = useState<TempoOption | "">(
     (song?.tempo as TempoOption | null) ?? "",
+  );
+  const [timeSignature, setTimeSignature] = useState<TimeSignature>(
+    (song?.time_signature as TimeSignature | undefined) ?? "4/4",
   );
   const [tags, setTags] = useState((song?.tags ?? []).join(", "));
   const [drafts, setDrafts] = useState<DraftSection[]>(() =>
@@ -85,6 +103,8 @@ export function SongForm({
         return t("worship.typeIntro", language);
       case "verse":
         return t("worship.typeVerse", language);
+      case "pre_chorus":
+        return t("worship.typePreChorus", language);
       case "chorus":
         return t("worship.typeChorus", language);
       case "bridge":
@@ -135,33 +155,39 @@ export function SongForm({
   };
 
   const save = () => {
-    if (!titleEn.trim() && !titleMm.trim()) {
+    if (songLang === "en" && !titleEn.trim() && !titleMm.trim()) {
+      showToast(t("worship.needTitle", language));
+      return;
+    }
+    if (songLang === "mm" && !titleMm.trim() && !titleEn.trim()) {
       showToast(t("worship.needTitle", language));
       return;
     }
     startTransition(async () => {
       const supabase = createClient();
       const bpmNum = bpm.trim() ? Number(bpm) : null;
-      const resolvedTempo =
-        tempo || tempoFromBpm(bpmNum) || null;
+      const resolvedTempo = tempo || tempoFromBpm(bpmNum) || null;
       const tagList = tags
         .split(",")
         .map((x) => x.trim())
         .filter(Boolean);
 
       let songId = song?.id;
+      const payload = {
+        title_en: titleEn.trim() || null,
+        title_mm: titleMm.trim() || null,
+        author: author.trim() || null,
+        default_key: defaultKey || null,
+        bpm: bpmNum,
+        tempo: resolvedTempo,
+        time_signature: timeSignature,
+        tags: tagList,
+      };
+
       if (songId) {
         const { error } = await supabase
           .from("songs")
-          .update({
-            title_en: titleEn.trim() || null,
-            title_mm: titleMm.trim() || null,
-            author: author.trim() || null,
-            default_key: defaultKey || null,
-            bpm: bpmNum,
-            tempo: resolvedTempo,
-            tags: tagList,
-          })
+          .update(payload)
           .eq("id", songId);
         if (error) {
           showToast(error.message);
@@ -171,16 +197,7 @@ export function SongForm({
       } else {
         const { data, error } = await supabase
           .from("songs")
-          .insert({
-            user_id: userId,
-            title_en: titleEn.trim() || null,
-            title_mm: titleMm.trim() || null,
-            author: author.trim() || null,
-            default_key: defaultKey || null,
-            bpm: bpmNum,
-            tempo: resolvedTempo,
-            tags: tagList,
-          })
+          .insert({ user_id: userId, ...payload })
           .select("id")
           .single();
         if (error || !data) {
@@ -216,26 +233,39 @@ export function SongForm({
 
   return (
     <div className="space-y-5">
+      <Segmented
+        value={songLang}
+        onChange={setSongLang}
+        options={[
+          { value: "en", label: t("worship.langEnglish", language) },
+          { value: "mm", label: t("worship.langMyanmar", language) },
+        ]}
+      />
+
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="title-en">{t("worship.titleEn", language)}</Label>
-          <Input
-            id="title-en"
-            value={titleEn}
-            onChange={(e) => setTitleEn(e.target.value)}
-            className="min-h-11"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="title-mm">{t("worship.titleMm", language)}</Label>
-          <Input
-            id="title-mm"
-            value={titleMm}
-            onChange={(e) => setTitleMm(e.target.value)}
-            className="min-h-11 mm-text"
-          />
-        </div>
-        <div className="space-y-1.5">
+        {songLang === "en" ? (
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="title-en">{t("worship.titleEn", language)}</Label>
+            <Input
+              id="title-en"
+              value={titleEn}
+              onChange={(e) => setTitleEn(e.target.value)}
+              className="min-h-11"
+            />
+          </div>
+        ) : (
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="title-mm">{t("worship.titleMm", language)}</Label>
+            <Input
+              id="title-mm"
+              value={titleMm}
+              onChange={(e) => setTitleMm(e.target.value)}
+              className="min-h-11 mm-text"
+            />
+          </div>
+        )}
+
+        <div className="space-y-1.5 sm:col-span-2">
           <Label htmlFor="author">{t("worship.author", language)}</Label>
           <Input
             id="author"
@@ -244,22 +274,30 @@ export function SongForm({
             className="min-h-11"
           />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="key">{t("worship.defaultKey", language)}</Label>
-          <select
-            id="key"
-            value={defaultKey}
-            onChange={(e) => setDefaultKey(e.target.value)}
-            className="flex h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-          >
-            <option value="">—</option>
-            {MUSIC_KEYS.map((k) => (
-              <option key={k} value={k}>
-                {k}
-              </option>
-            ))}
-          </select>
-        </div>
+
+        <PickerSheet
+          label={t("worship.defaultKey", language)}
+          value={defaultKey || "C"}
+          onChange={setDefaultKey}
+          mode="grid"
+          columns={5}
+          doneLabel={t("common.done", language)}
+          options={MUSIC_KEYS.map((k) => ({ value: k, label: k }))}
+        />
+
+        <PickerSheet
+          label={t("worship.timeSignature", language)}
+          value={timeSignature}
+          onChange={(v) => setTimeSignature(v as TimeSignature)}
+          mode="grid"
+          columns={3}
+          doneLabel={t("common.done", language)}
+          options={TIME_SIGNATURES.map((sig) => ({
+            value: sig,
+            label: sig,
+          }))}
+        />
+
         <div className="space-y-1.5">
           <Label htmlFor="bpm">{t("worship.tempoBpm", language)}</Label>
           <Input
@@ -280,26 +318,23 @@ export function SongForm({
             placeholder="72"
           />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="tempo">{t("worship.tempo", language)}</Label>
-          <select
-            id="tempo"
-            value={tempo}
-            onChange={(e) => setTempo(e.target.value as TempoOption | "")}
-            className="flex h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-          >
-            <option value="">—</option>
-            {TEMPO_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt === "slow"
-                  ? t("worship.tempoSlow", language)
-                  : opt === "medium"
-                    ? t("worship.tempoMedium", language)
-                    : t("worship.tempoFast", language)}
-              </option>
-            ))}
-          </select>
-        </div>
+
+        <PickerSheet
+          label={t("worship.tempo", language)}
+          value={tempo || "medium"}
+          onChange={(v) => setTempo(v as TempoOption)}
+          doneLabel={t("common.done", language)}
+          options={TEMPO_OPTIONS.map((opt) => ({
+            value: opt,
+            label:
+              opt === "slow"
+                ? t("worship.tempoSlow", language)
+                : opt === "medium"
+                  ? t("worship.tempoMedium", language)
+                  : t("worship.tempoFast", language),
+          }))}
+        />
+
         <div className="space-y-1.5 sm:col-span-2">
           <Label htmlFor="tags">{t("worship.tags", language)}</Label>
           <Input
@@ -313,11 +348,12 @@ export function SongForm({
       </div>
 
       <div className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold tracking-wide text-primary">
-            {t("worship.sections", language)}
-          </h3>
-        </div>
+        <h3 className="text-sm font-semibold tracking-wide text-primary">
+          {t("worship.sections", language)}
+        </h3>
+        <p className="text-xs text-muted-foreground">
+          {t("worship.chordHint", language)}
+        </p>
         <div className="flex flex-wrap gap-2">
           {SECTION_TYPES.map((type) => (
             <Button
@@ -340,13 +376,15 @@ export function SongForm({
           </p>
         ) : (
           <div className="space-y-3">
-            {drafts.map((section, index) => (
-              <div
-                key={section.localId}
-                className="rounded-2xl border border-primary/15 bg-gradient-to-br from-card via-card to-primary/5 p-4 shadow-[0_0_28px_-20px_hsl(var(--primary))]"
-              >
-                <div className="mb-3 flex items-center gap-2">
-                  <div className="flex flex-col gap-0.5">
+            {drafts.map((section, index) => {
+              const lyricsValue =
+                songLang === "mm" ? section.lyrics_mm : section.lyrics_en;
+              return (
+                <div
+                  key={section.localId}
+                  className="rounded-2xl border border-primary/15 bg-gradient-to-br from-card via-card to-primary/5 p-4 shadow-[0_0_28px_-20px_hsl(var(--primary))]"
+                >
+                  <div className="mb-3 flex items-center gap-2">
                     <button
                       type="button"
                       aria-label="Move up"
@@ -356,85 +394,92 @@ export function SongForm({
                     >
                       <GripVertical className="h-4 w-4 rotate-90" />
                     </button>
-                  </div>
-                  <select
-                    value={section.section_type}
-                    onChange={(e) =>
-                      updateSection(section.localId, {
-                        section_type: e.target.value as SectionType,
-                      })
-                    }
-                    className="h-10 rounded-md border border-input bg-transparent px-2 text-sm"
-                  >
-                    {SECTION_TYPES.map((type) => (
-                      <option key={type} value={type}>
-                        {sectionTypeLabel(type)}
-                      </option>
-                    ))}
-                  </select>
-                  <Input
-                    value={section.label}
-                    onChange={(e) =>
-                      updateSection(section.localId, { label: e.target.value })
-                    }
-                    className="min-h-10 flex-1"
-                    placeholder={t("worship.sectionLabel", language)}
-                  />
-                  <button
-                    type="button"
-                    aria-label={t("common.delete", language)}
-                    className="flex min-h-10 min-w-10 items-center justify-center rounded-lg text-destructive hover:bg-destructive/10"
-                    onClick={() => removeSection(section.localId)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label>{t("worship.lyricsMm", language)}</Label>
-                    <textarea
-                      value={section.lyrics_mm}
+                    <div className="min-w-[8rem] flex-1">
+                      <PickerSheet
+                        label={t("worship.sectionType", language)}
+                        value={section.section_type}
+                        onChange={(v) =>
+                          updateSection(section.localId, {
+                            section_type: v as SectionType,
+                          })
+                        }
+                        doneLabel={t("common.done", language)}
+                        options={SECTION_TYPES.map((type) => ({
+                          value: type,
+                          label: sectionTypeLabel(type),
+                        }))}
+                      />
+                    </div>
+                    <Input
+                      value={section.label}
                       onChange={(e) =>
                         updateSection(section.localId, {
-                          lyrics_mm: e.target.value,
+                          label: e.target.value,
                         })
                       }
-                      rows={5}
-                      className={cn(
-                        "w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm mm-text",
-                        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                      )}
+                      className="min-h-11 flex-1"
+                      placeholder={t("worship.sectionLabel", language)}
                     />
+                    <button
+                      type="button"
+                      aria-label={t("common.delete", language)}
+                      className="flex min-h-10 min-w-10 items-center justify-center rounded-lg text-destructive hover:bg-destructive/10"
+                      onClick={() => removeSection(section.localId)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
+
                   <div className="space-y-1.5">
-                    <Label>{t("worship.lyricsEn", language)}</Label>
+                    <Label>
+                      {songLang === "mm"
+                        ? t("worship.lyricsMm", language)
+                        : t("worship.lyricsEn", language)}
+                    </Label>
                     <textarea
-                      value={section.lyrics_en}
+                      value={lyricsValue}
                       onChange={(e) =>
-                        updateSection(section.localId, {
-                          lyrics_en: e.target.value,
-                        })
+                        updateSection(
+                          section.localId,
+                          songLang === "mm"
+                            ? { lyrics_mm: e.target.value }
+                            : { lyrics_en: e.target.value },
+                        )
                       }
                       rows={5}
                       className={cn(
                         "w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm",
+                        songLang === "mm" && "mm-text",
                         "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                       )}
+                      placeholder="[C]If you miss the [Am]train…"
+                    />
+                  </div>
+
+                  {lyricsValue.trim() ? (
+                    <div className="mt-3 rounded-xl border border-border/60 bg-muted/20 p-3">
+                      <ChordLyrics
+                        lyrics={lyricsValue}
+                        mm={songLang === "mm"}
+                      />
+                    </div>
+                  ) : null}
+
+                  <div className="mt-3 space-y-1.5">
+                    <Label>{t("worship.sectionNotes", language)}</Label>
+                    <Input
+                      value={section.notes}
+                      onChange={(e) =>
+                        updateSection(section.localId, {
+                          notes: e.target.value,
+                        })
+                      }
+                      className="min-h-10"
                     />
                   </div>
                 </div>
-                <div className="mt-3 space-y-1.5">
-                  <Label>{t("worship.sectionNotes", language)}</Label>
-                  <Input
-                    value={section.notes}
-                    onChange={(e) =>
-                      updateSection(section.localId, { notes: e.target.value })
-                    }
-                    className="min-h-10"
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
