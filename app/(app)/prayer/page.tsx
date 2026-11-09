@@ -17,25 +17,33 @@ export default async function PrayerPage() {
   const language = profileLanguage(profile);
   const partnerId = await getPartnerUserId(supabase, user.id);
 
-  const [{ data: prayers }, { data: interactions }, { data: gratitude }] =
-    await Promise.all([
-      supabase
-        .from("prayers")
-        .select("*")
-        .or(`user_id.eq.${user.id},is_shared.eq.true`)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("prayer_interactions")
-        .select("*")
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("gratitude_entries")
-        .select("*")
-        .or(
-          `user_id.eq.${user.id},is_shared.eq.true${partnerId ? `,recipient_id.eq.${user.id}` : ""}`,
-        )
-        .order("entry_date", { ascending: false }),
-    ]);
+  const [
+    { data: prayers },
+    { data: gratitude },
+    { data: reactions },
+    { data: comments },
+  ] = await Promise.all([
+    supabase
+      .from("prayers")
+      .select("*")
+      .or(`user_id.eq.${user.id},is_shared.eq.true`)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("gratitude_entries")
+      .select("*")
+      .or(
+        `user_id.eq.${user.id},is_shared.eq.true${partnerId ? `,recipient_id.eq.${user.id}` : ""}`,
+      )
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("feed_reactions")
+      .select("*")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("feed_comments")
+      .select("*")
+      .order("created_at", { ascending: true }),
+  ]);
 
   return (
     <PrayerSection
@@ -43,9 +51,9 @@ export default async function PrayerPage() {
       userId={user.id}
       partnerId={partnerId}
       prayers={prayers ?? []}
-      interactions={interactions ?? []}
-      reminderTime={profile?.prayer_reminder_time ?? null}
       gratitudeEntries={gratitude ?? []}
+      reactions={reactions ?? []}
+      comments={comments ?? []}
     />
   );
 }

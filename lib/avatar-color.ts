@@ -5,7 +5,7 @@ export function colorFromUserId(userId: string): string {
     hash = (hash * 31 + userId.charCodeAt(i)) >>> 0;
   }
   const hue = hash % 360;
-  return `hsl(${hue} 28% 42%)`;
+  return `hsl(${hue} 62% 48%)`;
 }
 
 export function initialsFromName(name: string | null | undefined): string {

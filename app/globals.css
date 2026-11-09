@@ -3,60 +3,60 @@
 @tailwind utilities;
 
 @layer base {
-  /* Warm peaceful dark: charcoal-brown base, cream text, sage + amber accents */
+  /* Vibrant peaceful dark: deep indigo/plum, luminous accents */
   :root {
-    --background: 30 12% 9%; /* #1a1815 */
-    --foreground: 36 28% 88%; /* #e8e2d8 soft cream */
-    --card: 30 7% 14%; /* #252220 surface */
-    --card-foreground: 36 28% 88%;
-    --popover: 30 9% 12%; /* ~#201d19 */
-    --popover-foreground: 36 28% 88%;
-    --primary: 116 15% 60%; /* #8ba888 warm sage */
-    --primary-foreground: 30 12% 10%;
-    --secondary: 30 8% 16%;
-    --secondary-foreground: 36 20% 84%;
-    --muted: 30 8% 16%;
-    --muted-foreground: 32 10% 62%;
-    --accent: 30 52% 64%; /* #d4a574 soft amber */
-    --accent-foreground: 30 12% 12%;
-    --destructive: 8 55% 48%;
-    --destructive-foreground: 36 28% 94%;
-    --border: 30 8% 20%;
-    --input: 30 8% 18%;
-    --ring: 116 15% 60%;
-    --chart-1: 116 15% 60%;
-    --chart-2: 30 52% 64%;
-    --chart-3: 28 18% 48%;
-    --chart-4: 100 12% 52%;
-    --chart-5: 40 30% 58%;
-    --radius: 0.75rem;
+    --background: 255 42% 8%; /* deep indigo */
+    --foreground: 250 40% 96%;
+    --card: 268 35% 12%; /* deep plum surface */
+    --card-foreground: 250 40% 96%;
+    --popover: 260 38% 11%;
+    --popover-foreground: 250 40% 96%;
+    --primary: 168 55% 52%; /* vivid teal */
+    --primary-foreground: 255 42% 8%;
+    --secondary: 280 40% 18%;
+    --secondary-foreground: 280 40% 92%;
+    --muted: 260 28% 16%;
+    --muted-foreground: 250 18% 72%;
+    --accent: 32 95% 62%; /* warm coral-amber */
+    --accent-foreground: 255 42% 10%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 268 28% 22%;
+    --input: 268 28% 18%;
+    --ring: 168 55% 52%;
+    --chart-1: 168 55% 52%;
+    --chart-2: 320 70% 62%;
+    --chart-3: 32 95% 62%;
+    --chart-4: 210 80% 60%;
+    --chart-5: 280 65% 65%;
+    --radius: 0.85rem;
   }
 
   .dark {
-    --background: 30 12% 9%;
-    --foreground: 36 28% 88%;
-    --card: 30 7% 14%;
-    --card-foreground: 36 28% 88%;
-    --popover: 30 9% 12%;
-    --popover-foreground: 36 28% 88%;
-    --primary: 116 15% 60%;
-    --primary-foreground: 30 12% 10%;
-    --secondary: 30 8% 16%;
-    --secondary-foreground: 36 20% 84%;
-    --muted: 30 8% 16%;
-    --muted-foreground: 32 10% 62%;
-    --accent: 30 52% 64%;
-    --accent-foreground: 30 12% 12%;
-    --destructive: 8 55% 48%;
-    --destructive-foreground: 36 28% 94%;
-    --border: 30 8% 20%;
-    --input: 30 8% 18%;
-    --ring: 116 15% 60%;
-    --chart-1: 116 15% 60%;
-    --chart-2: 30 52% 64%;
-    --chart-3: 28 18% 48%;
-    --chart-4: 100 12% 52%;
-    --chart-5: 40 30% 58%;
+    --background: 255 42% 8%;
+    --foreground: 250 40% 96%;
+    --card: 268 35% 12%;
+    --card-foreground: 250 40% 96%;
+    --popover: 260 38% 11%;
+    --popover-foreground: 250 40% 96%;
+    --primary: 168 55% 52%;
+    --primary-foreground: 255 42% 8%;
+    --secondary: 280 40% 18%;
+    --secondary-foreground: 280 40% 92%;
+    --muted: 260 28% 16%;
+    --muted-foreground: 250 18% 72%;
+    --accent: 32 95% 62%;
+    --accent-foreground: 255 42% 10%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 268 28% 22%;
+    --input: 268 28% 18%;
+    --ring: 168 55% 52%;
+    --chart-1: 168 55% 52%;
+    --chart-2: 320 70% 62%;
+    --chart-3: 32 95% 62%;
+    --chart-4: 210 80% 60%;
+    --chart-5: 280 65% 65%;
   }
 }
 
@@ -66,11 +66,11 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    background-image: linear-gradient(
-      180deg,
-      hsl(30 12% 9%) 0%,
-      hsl(30 10% 11%) 100%
-    );
+    background-image:
+      radial-gradient(ellipse 90% 50% at 10% -10%, hsl(280 70% 30% / 0.35), transparent 55%),
+      radial-gradient(ellipse 70% 40% at 95% 5%, hsl(168 60% 28% / 0.28), transparent 50%),
+      radial-gradient(ellipse 60% 35% at 50% 100%, hsl(320 55% 28% / 0.22), transparent 55%),
+      linear-gradient(180deg, hsl(255 42% 8%) 0%, hsl(268 38% 9%) 100%);
     background-attachment: fixed;
     font-family: var(--font-noto-sans), var(--font-noto-sans-myanmar),
       ui-sans-serif, system-ui, sans-serif;
@@ -78,11 +78,46 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Myanmar script readability on dark surfaces */
   .mm-text {
     font-family: var(--font-noto-sans-myanmar), var(--font-noto-sans),
       ui-sans-serif, system-ui, sans-serif;
     line-height: 1.75;
     letter-spacing: 0.01em;
+  }
+}
+
+@layer utilities {
+  .card-glow {
+    background-image: linear-gradient(
+      145deg,
+      hsl(var(--card)) 0%,
+      hsl(280 40% 14% / 0.9) 55%,
+      hsl(168 40% 14% / 0.55) 100%
+    );
+  }
+
+  .btn-glow {
+    background-image: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(190 70% 48%) 50%,
+      hsl(280 65% 58%) 100%
+    );
+    color: hsl(var(--primary-foreground));
+  }
+
+  @keyframes heart-float {
+    0% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-48px) scale(1.35);
+    }
+  }
+
+  .animate-heart-float {
+    animation: heart-float 0.9s ease-out forwards;
   }
 }

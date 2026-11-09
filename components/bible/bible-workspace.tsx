@@ -55,7 +55,7 @@ export type FavoriteCard = Favorite & {
   text_kjv?: string | null;
 };
 
-type Tab = "read" | "search" | "streaks" | "favorites";
+type Tab = "read" | "search" | "me" | "streaks" | "favorites";
 
 type SelectionBar = {
   verse: number;
@@ -172,7 +172,7 @@ export function BibleWorkspace({
 }) {
   const router = useRouter();
   const { showToast } = useToast();
-  const { partner, partnerName, myName } = useCouple();
+  const { me, partner, partnerName, myName } = useCouple();
   const [pending, startTransition] = useTransition();
   const [tab, setTab] = useState<Tab>("read");
   const [versions, setVersions] = useState<BibleVersion[]>(
@@ -650,16 +650,14 @@ export function BibleWorkspace({
     ? (chaptersByDate.get(selectedDay) ?? [])
     : [];
 
+  const myChapterCount = new Set(
+    mySessions.map((s) => `${s.book_id}:${s.chapter}`),
+  ).size;
+
   const tabOptions: { value: Tab; label: ReactNode }[] = [
     {
       value: "read",
-      label: (
-        <>
-          <UserRound className="h-3.5 w-3.5" aria-hidden />
-          <span className="max-w-[5.5rem] truncate">{myName}</span>
-          <span className="text-muted-foreground">({t("bible.read", language)})</span>
-        </>
-      ),
+      label: t("bible.read", language),
     },
     {
       value: "search",
@@ -667,6 +665,15 @@ export function BibleWorkspace({
         <span title={t("bible.search", language)} className="inline-flex items-center">
           <Search className="h-4 w-4" aria-hidden />
           <span className="sr-only">{t("bible.search", language)}</span>
+        </span>
+      ),
+    },
+    {
+      value: "me",
+      label: (
+        <span className="inline-flex max-w-[6.5rem] items-center gap-1.5">
+          <UserRound className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span className="truncate">{myName}</span>
         </span>
       ),
     },
@@ -700,7 +707,7 @@ export function BibleWorkspace({
 
       {tab === "read" ? (
         <div className="space-y-4 pb-24">
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-2">
             <PickerSheet
               label={t("bible.book", language)}
               value={bookId}
@@ -928,35 +935,45 @@ export function BibleWorkspace({
         </div>
       ) : null}
 
-      {tab === "streaks" ? (
+      {tab === "me" ? (
         <div className="space-y-5">
-          <div className="rounded-2xl border border-border bg-card p-5">
-            <p className="text-sm text-muted-foreground">
-              {t("bible.streakGift", language)}
-            </p>
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {t("bible.currentStreak", language)}
-                </p>
-                <p className="mt-1 text-3xl font-semibold text-primary">
-                  {streaks.current}{" "}
-                  <span className="text-base font-normal text-muted-foreground">
-                    {t("bible.days", language)}
-                  </span>
-                </p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {t("bible.bestStreak", language)}
-                </p>
-                <p className="mt-1 text-3xl font-semibold">
-                  {streaks.best}{" "}
-                  <span className="text-base font-normal text-muted-foreground">
-                    {t("bible.days", language)}
-                  </span>
-                </p>
-              </div>
+          <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-border card-glow p-4">
+            <UserAvatar
+              userId={userId}
+              displayName={myName}
+              avatarUrl={me.avatar_url}
+              size={56}
+            />
+            <div className="min-w-0 flex-1">
+              <h2 className="truncate text-xl font-semibold">{myName}</h2>
+              <p className="text-sm text-muted-foreground">
+                {t("bible.myProgress", language)}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <p className="text-xs text-muted-foreground">
+                {t("bible.currentStreak", language)}
+              </p>
+              <p className="mt-1 text-3xl font-semibold text-primary">
+                {streaks.current}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <p className="text-xs text-muted-foreground">
+                {t("bible.bestStreak", language)}
+              </p>
+              <p className="mt-1 text-3xl font-semibold">{streaks.best}</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <p className="text-xs text-muted-foreground">
+                {t("bible.chaptersRead", language)}
+              </p>
+              <p className="mt-1 text-3xl font-semibold text-accent">
+                {myChapterCount}
+              </p>
             </div>
           </div>
 
@@ -996,6 +1013,40 @@ export function BibleWorkspace({
                 </div>
               ))
             )}
+          </div>
+        </div>
+      ) : null}
+
+      {tab === "streaks" ? (
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-border card-glow p-5">
+            <p className="text-sm text-muted-foreground">
+              {t("bible.streakGift", language)}
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {t("bible.currentStreak", language)}
+                </p>
+                <p className="mt-1 text-3xl font-semibold text-primary">
+                  {streaks.current}{" "}
+                  <span className="text-base font-normal text-muted-foreground">
+                    {t("bible.days", language)}
+                  </span>
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {t("bible.bestStreak", language)}
+                </p>
+                <p className="mt-1 text-3xl font-semibold">
+                  {streaks.best}{" "}
+                  <span className="text-base font-normal text-muted-foreground">
+                    {t("bible.days", language)}
+                  </span>
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-4">

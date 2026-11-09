@@ -43,6 +43,16 @@ export const strings = {
     en: { en: "English", mm: "English" },
     mm: { en: "Myanmar", mm: "မြန်မာ" },
   },
+  settings: {
+    title: { en: "Settings", mm: "ဆက်တင်" },
+    profile: { en: "Your profile", mm: "သင့်ပရိုဖိုင်" },
+    displayName: { en: "Display name", mm: "ပြသမည့်အမည်" },
+    languageHint: {
+      en: "App UI language (menus and labels).",
+      mm: "အက်ပ် UI ဘာသာစကား (မီနူးနှင့် စာသားများ)။",
+    },
+    saved: { en: "Settings saved.", mm: "ဆက်တင်များ သိမ်းပြီးပါပြီ။" },
+  },
   stubs: {
     comingSoon: {
       en: "Coming in a later phase.",
@@ -109,6 +119,15 @@ export const strings = {
       en: "Select versions",
       mm: "ဗားရှင်း ရွေးရန်",
     },
+    versionsTitle: {
+      en: "Bible versions",
+      mm: "ကျမ်းစာဗားရှင်းများ",
+    },
+    versionsHint: {
+      en: "Choose one or more. Selected versions appear side by side.",
+      mm: "တစ်ခု သို့မဟုတ် တစ်ခုထက်ပို ရွေးပါ။ ရွေးထားသည်များ ဘေးချင်းကပ် ပြသမည်။",
+    },
+    myProgress: { en: "My progress", mm: "ကျွန်ုပ်၏ တိုးတက်မှု" },
     mmFallback: { en: "MM", mm: "မြန်မာ" },
     kjvFallback: { en: "EN", mm: "အင်္ဂလိပ်" },
     markRead: { en: "Mark chapter as read", mm: "အခန်းကို ဖတ်ပြီးဟုမှတ်ရန်" },
@@ -217,6 +236,38 @@ export const strings = {
     namePrayed: {
       en: "{name} prayed",
       mm: "{name} ဆုတောင်းခဲ့သည်",
+    },
+  },
+  feed: {
+    title: { en: "Together", mm: "အတူတကွ" },
+    composerPrompt: {
+      en: "What’s on your mind?",
+      mm: "ဘာတွေ စဉ်းစားနေလဲ?",
+    },
+    newPost: { en: "Create post", mm: "ပို့စ်ဖန်တီးရန်" },
+    typePrayer: { en: "Prayer", mm: "ဆုတောင်း" },
+    typeGratitude: { en: "Gratitude", mm: "ကျေးဇူးတင်" },
+    sharedWith: {
+      en: "Shared with {name}",
+      mm: "{name} နှင့် မျှဝေထား",
+    },
+    prayedFor: {
+      en: "Prayer for {name}",
+      mm: "{name} အတွက် ဆုတောင်း",
+    },
+    love: { en: "Love", mm: "ချစ်ခြင်း" },
+    loved: { en: "Loved", mm: "ချစ်ပြီး" },
+    comments: { en: "{n} Comments", mm: "မှတ်ချက် {n} ခု" },
+    commentOne: { en: "1 Comment", mm: "မှတ်ချက် ၁ ခု" },
+    commentZero: { en: "0 Comments", mm: "မှတ်ချက် ၀ ခု" },
+    writeComment: {
+      en: "Write a comment…",
+      mm: "မှတ်ချက် ရေးပါ…",
+    },
+    post: { en: "Post", mm: "တင်ရန်" },
+    empty: {
+      en: "No posts yet. Share a prayer or gratitude.",
+      mm: "ပို့စ် မရှိသေးပါ။ ဆုတောင်း သို့မဟုတ် ကျေးဇူးတင်ချက် မျှဝေပါ။",
     },
   },
   gratitude: {

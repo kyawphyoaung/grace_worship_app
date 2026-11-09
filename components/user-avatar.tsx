@@ -22,7 +22,7 @@ export function UserAvatar({
   return (
     <span
       className={cn(
-        "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-2 ring-primary/30",
+        "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-2 ring-primary/40 shadow-[0_0_16px_-6px_hsl(var(--primary))]",
         className,
       )}
       style={{ width: size, height: size }}
@@ -33,8 +33,11 @@ export function UserAvatar({
         <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
       ) : (
         <span
-          className="flex h-full w-full items-center justify-center font-semibold text-primary-foreground"
-          style={{ backgroundColor: bg, fontSize: Math.max(11, size * 0.32) }}
+          className="flex h-full w-full items-center justify-center font-semibold text-white"
+          style={{
+            backgroundImage: `linear-gradient(135deg, ${bg}, hsl(280 65% 48%))`,
+            fontSize: Math.max(11, size * 0.32),
+          }}
         >
           {initials}
         </span>
