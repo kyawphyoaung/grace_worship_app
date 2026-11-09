@@ -6,10 +6,11 @@
 - Phase 2.5 (1d7f3c5) — iOS pickers, Home, Bible favorites, partner UI, migration 004
 - Phase 2.5 fixes (986cd8c) — smoke test issues 1–9; migration 005 applied
 - Phase 2.6 (d84de75) — KJV versions, sharing RLS fix, notifications, warm UI (migration 006)
-- Phase 2.7 — Facebook-style feed, settings page, colorful UI, bible layout (migration 007)
+- Phase 2.7 (8e108c2) — Facebook-style feed, settings page, colorful UI, bible layout (migration 007)
+- Phase 2.8 — Feed filters, mobile notification popup, love/comment rules, bible tab split (migration 008)
 
 ## Next up
-- Apply migration 007 (`supabase db push`) after owner review
+- Apply migration 008 (`supabase db push`) after owner review
 - Phase 3 — Worship (songs, events, setlists, PDF, post-service)
 - Phase 4 — Tracking, PWA, deploy
 
@@ -34,4 +35,4 @@ npm run dev · npm run seed:bible · npm run seed:bible:chin · npm run seed:bib
 profiles (+preferred_bible_languages), partners, bible_books (+name_chin), bible_verses (+text_chin, +text_kjv), bible_study_sessions, bible_study_notes, bible_favorites, prayers (+recipient_id), prayer_interactions, gratitude_entries (+recipient_id), notifications, feed_reactions, feed_comments, songs, song_sections, events, setlists, setlist_items, event_prayers, event_feedback, ministry_reflections
 
 ## Migrations
-001–006 applied · 007_feed_reactions_comments (pending push)
+001–007 applied · 008_feed_interaction_notifications (pending push)

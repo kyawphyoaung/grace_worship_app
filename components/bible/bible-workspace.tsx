@@ -9,14 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import {
-  format,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  isSameDay,
-  subDays,
-} from "date-fns";
+import { format, eachDayOfInterval, subDays } from "date-fns";
 import { Flame, Heart, Search, UserRound } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { t, tf, type Language } from "@/lib/i18n";
@@ -55,7 +48,7 @@ export type FavoriteCard = Favorite & {
   text_kjv?: string | null;
 };
 
-type Tab = "read" | "search" | "me" | "streaks" | "favorites";
+type Tab = "read" | "search" | "streaks" | "partner" | "favorites";
 
 type SelectionBar = {
   verse: number;
@@ -191,8 +184,6 @@ export function BibleWorkspace({
     (Verse & { book_name_en: string; book_name_mm: string })[]
   >([]);
   const [searching, setSearching] = useState(false);
-  const [calendarMonth, setCalendarMonth] = useState(new Date());
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectionBar, setSelectionBar] = useState<SelectionBar | null>(null);
   const [showStickyMark, setShowStickyMark] = useState(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -636,9 +627,6 @@ export function BibleWorkspace({
     return <p className="text-muted-foreground">{t("bible.noBooks", language)}</p>;
   }
 
-  const monthStart = startOfMonth(calendarMonth);
-  const monthEnd = endOfMonth(calendarMonth);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const last30 = eachDayOfInterval({
     start: subDays(new Date(), 29),
     end: new Date(),
@@ -646,13 +634,46 @@ export function BibleWorkspace({
   const partnerChapterCount = new Set(
     partnerSessions.map((s) => `${s.book_id}:${s.chapter}`),
   ).size;
-  const selectedDayChapters = selectedDay
-    ? (chaptersByDate.get(selectedDay) ?? [])
-    : [];
 
   const myChapterCount = new Set(
     mySessions.map((s) => `${s.book_id}:${s.chapter}`),
   ).size;
+
+  const partnerChaptersByDate = useMemo(() => {
+    const byDate = new Map<string, Session[]>();
+    for (const s of partnerSessions) {
+      const list = byDate.get(s.session_date) ?? [];
+      list.push(s);
+      byDate.set(s.session_date, list);
+    }
+    const map = new Map<
+      string,
+      { bookId: string; chapter: number; label: string }[]
+    >();
+    for (const [date, sessions] of byDate) {
+      const seen = new Set<string>();
+      const entries: { bookId: string; chapter: number; label: string }[] = [];
+      for (const s of sessions) {
+        const key = `${s.book_id}:${s.chapter}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const book = books.find((b) => b.id === s.book_id);
+        entries.push({
+          bookId: s.book_id,
+          chapter: s.chapter,
+          label: `${bookLabel(book, language, versions)} ${s.chapter}`,
+        });
+      }
+      map.set(date, entries);
+    }
+    return map;
+  }, [partnerSessions, books, language, versions]);
+
+  const partnerChapterGroups = useMemo(() => {
+    return [...partnerChaptersByDate.entries()]
+      .sort(([a], [b]) => (a < b ? 1 : -1))
+      .slice(0, 40);
+  }, [partnerChaptersByDate]);
 
   const tabOptions: { value: Tab; label: ReactNode }[] = [
     {
@@ -669,20 +690,20 @@ export function BibleWorkspace({
       ),
     },
     {
-      value: "me",
-      label: (
-        <span className="inline-flex max-w-[6.5rem] items-center gap-1.5">
-          <UserRound className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span className="truncate">{myName}</span>
-        </span>
-      ),
-    },
-    {
       value: "streaks",
       label: (
         <span title={t("bible.streaks", language)} className="inline-flex items-center">
           <Flame className="h-4 w-4" aria-hidden />
           <span className="sr-only">{t("bible.streaks", language)}</span>
+        </span>
+      ),
+    },
+    {
+      value: "partner",
+      label: (
+        <span className="inline-flex max-w-[6.5rem] items-center gap-1.5">
+          <UserRound className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span className="truncate">{partnerName}</span>
         </span>
       ),
     },
@@ -935,7 +956,7 @@ export function BibleWorkspace({
         </div>
       ) : null}
 
-      {tab === "me" ? (
+      {tab === "streaks" ? (
         <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-border card-glow p-4">
             <UserAvatar
@@ -952,28 +973,33 @@ export function BibleWorkspace({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-border bg-card p-4">
-              <p className="text-xs text-muted-foreground">
-                {t("bible.currentStreak", language)}
-              </p>
-              <p className="mt-1 text-3xl font-semibold text-primary">
-                {streaks.current}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border bg-card p-4">
-              <p className="text-xs text-muted-foreground">
-                {t("bible.bestStreak", language)}
-              </p>
-              <p className="mt-1 text-3xl font-semibold">{streaks.best}</p>
-            </div>
-            <div className="rounded-2xl border border-border bg-card p-4">
-              <p className="text-xs text-muted-foreground">
-                {t("bible.chaptersRead", language)}
-              </p>
-              <p className="mt-1 text-3xl font-semibold text-accent">
-                {myChapterCount}
-              </p>
+          <div className="rounded-2xl border border-border card-glow p-5">
+            <p className="text-sm text-muted-foreground">
+              {t("bible.streakGift", language)}
+            </p>
+            <div className="mt-4 grid grid-cols-3 gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {t("bible.currentStreak", language)}
+                </p>
+                <p className="mt-1 text-3xl font-semibold text-primary">
+                  {streaks.current}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {t("bible.bestStreak", language)}
+                </p>
+                <p className="mt-1 text-3xl font-semibold">{streaks.best}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {t("bible.chaptersRead", language)}
+                </p>
+                <p className="mt-1 text-3xl font-semibold text-accent">
+                  {myChapterCount}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -1017,130 +1043,99 @@ export function BibleWorkspace({
         </div>
       ) : null}
 
-      {tab === "streaks" ? (
+      {tab === "partner" ? (
         <div className="space-y-5">
-          <div className="rounded-2xl border border-border card-glow p-5">
-            <p className="text-sm text-muted-foreground">
-              {t("bible.streakGift", language)}
-            </p>
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {t("bible.currentStreak", language)}
-                </p>
-                <p className="mt-1 text-3xl font-semibold text-primary">
-                  {streaks.current}{" "}
-                  <span className="text-base font-normal text-muted-foreground">
-                    {t("bible.days", language)}
-                  </span>
-                </p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {t("bible.bestStreak", language)}
-                </p>
-                <p className="mt-1 text-3xl font-semibold">
-                  {streaks.best}{" "}
-                  <span className="text-base font-normal text-muted-foreground">
-                    {t("bible.days", language)}
-                  </span>
-                </p>
-              </div>
+          <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-border card-glow p-4">
+            {partner ? (
+              <UserAvatar
+                userId={partner.id}
+                displayName={partnerName}
+                avatarUrl={partner.avatar_url}
+                size={56}
+              />
+            ) : null}
+            <div className="min-w-0 flex-1">
+              <h2 className="truncate text-xl font-semibold">{partnerName}</h2>
+              <span className="mt-1 inline-flex rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary">
+                {partnerStreaks.current} {t("bible.days", language)}
+              </span>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Button
-                variant="ghost"
-                className="min-h-11"
-                onClick={() =>
-                  setCalendarMonth(
-                    new Date(
-                      calendarMonth.getFullYear(),
-                      calendarMonth.getMonth() - 1,
-                      1,
-                    ),
-                  )
-                }
-              >
-                ‹
-              </Button>
-              <p className="font-medium">{format(calendarMonth, "MMMM yyyy")}</p>
-              <Button
-                variant="ghost"
-                className="min-h-11"
-                onClick={() =>
-                  setCalendarMonth(
-                    new Date(
-                      calendarMonth.getFullYear(),
-                      calendarMonth.getMonth() + 1,
-                      1,
-                    ),
-                  )
-                }
-              >
-                ›
-              </Button>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <p className="text-xs text-muted-foreground">
+                {t("bible.currentStreak", language)}
+              </p>
+              <p className="mt-1 text-3xl font-semibold text-primary">
+                {partnerStreaks.current}
+              </p>
             </div>
-            <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
-              {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-                <div key={`${d}-${i}`} className="py-1">
-                  {d}
-                </div>
-              ))}
-              {Array.from({ length: monthStart.getDay() }).map((_, i) => (
-                <div key={`pad-${i}`} />
-              ))}
-              {days.map((day) => {
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <p className="text-xs text-muted-foreground">
+                {t("bible.bestStreak", language)}
+              </p>
+              <p className="mt-1 text-3xl font-semibold">{partnerStreaks.best}</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <p className="text-xs text-muted-foreground">
+                {tf("bible.chaptersReadBy", language, { name: partnerName })}
+              </p>
+              <p className="mt-1 text-3xl font-semibold text-accent">
+                {partnerChapterCount}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-muted-foreground">
+              {t("bible.last30Days", language)}
+            </h3>
+            <div
+              className="grid gap-1.5"
+              style={{ gridTemplateColumns: "repeat(10, minmax(0, 1fr))" }}
+            >
+              {last30.map((day) => {
                 const key = format(day, "yyyy-MM-dd");
-                const dayEntries = chaptersByDate.get(key) ?? [];
-                const has = dayEntries.length > 0;
                 return (
-                  <button
+                  <div
                     key={key}
-                    type="button"
-                    onClick={() => setSelectedDay(key)}
+                    title={key}
                     className={cn(
-                      "flex min-h-14 flex-col items-center justify-start gap-0.5 rounded-lg px-0.5 py-1 text-sm",
-                      has && "bg-primary/15 text-primary",
-                      isSameDay(day, new Date()) && "ring-1 ring-primary/40",
-                      selectedDay === key && "bg-primary/25",
+                      "aspect-square rounded-md",
+                      partnerSessionDates.has(key)
+                        ? "bg-primary/70"
+                        : "bg-muted/60",
                     )}
-                  >
-                    <span>{format(day, "d")}</span>
-                    {has ? (
-                      <span className="line-clamp-2 w-full text-[9px] leading-tight text-primary/80">
-                        {dayEntries
-                          .slice(0, 2)
-                          .map((e) => e.label)
-                          .join(" · ")}
-                        {dayEntries.length > 2 ? "…" : ""}
-                      </span>
-                    ) : null}
-                  </button>
+                  />
                 );
               })}
             </div>
-            {selectedDay ? (
-              <div className="rounded-xl border border-border bg-card p-4">
-                <p className="text-sm font-medium">
-                  {format(new Date(`${selectedDay}T12:00:00`), "EEEE, MMM d")}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t("bible.dayChapters", language)}
-                </p>
-                {selectedDayChapters.length === 0 ? (
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    {t("bible.noChaptersThatDay", language)}
+          </div>
+
+          <div className="space-y-3">
+            <h2 className="text-sm font-medium text-muted-foreground">
+              {tf("bible.chaptersReadBy", language, { name: partnerName })}
+            </h2>
+            {partnerChapterGroups.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {tf("bible.emptyPartner", language, { name: partnerName })}
+              </p>
+            ) : (
+              partnerChapterGroups.map(([date, entries]) => (
+                <div
+                  key={date}
+                  className="rounded-xl border border-border bg-card p-3"
+                >
+                  <p className="text-xs font-medium text-primary">
+                    {format(new Date(`${date}T12:00:00`), "EEE, MMM d")}
                   </p>
-                ) : (
-                  <ul className="mt-3 space-y-2">
-                    {selectedDayChapters.map((e) => (
-                      <li key={`${selectedDay}-${e.bookId}-${e.chapter}`}>
+                  <ul className="mt-2 flex flex-wrap gap-1.5">
+                    {entries.map((e) => (
+                      <li key={`p-${date}-${e.bookId}-${e.chapter}`}>
                         <button
                           type="button"
-                          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-left text-sm"
+                          className="rounded-lg bg-primary/10 px-2.5 py-1 text-xs text-primary"
                           onClick={() => {
                             setTab("read");
                             navigateChapter(e.bookId, e.chapter);
@@ -1151,134 +1146,70 @@ export function BibleWorkspace({
                       </li>
                     ))}
                   </ul>
-                )}
-              </div>
-            ) : null}
+                </div>
+              ))
+            )}
           </div>
 
-          <div className="space-y-5 border-t border-border pt-5">
-            <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-card p-4">
-              {partner ? (
-                <UserAvatar
-                  userId={partner.id}
-                  displayName={partnerName}
-                  avatarUrl={partner.avatar_url}
-                  size={56}
-                />
-              ) : null}
-              <div className="min-w-0 flex-1">
-                <h2 className="truncate text-xl font-semibold">{partnerName}</h2>
-                <span className="mt-1 inline-flex rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary">
-                  {partnerStreaks.current} {t("bible.days", language)}
-                </span>
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-border bg-card p-4">
-                <p className="text-xs text-muted-foreground">
-                  {tf("bible.chaptersReadBy", language, { name: partnerName })}
-                </p>
-                <p className="mt-1 text-3xl font-semibold text-primary">
-                  {partnerChapterCount}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-border bg-card p-4">
-                <p className="text-xs text-muted-foreground">
-                  {t("bible.currentStreak", language)}
-                </p>
-                <p className="mt-1 text-3xl font-semibold">
-                  {partnerStreaks.current}
-                </p>
-              </div>
-            </div>
-
+          <div className="grid gap-5 lg:grid-cols-2">
             <div>
               <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-                {t("bible.last30Days", language)}
+                {tf("bible.sharedNotesBy", language, { name: partnerName })}
               </h3>
-              <div
-                className="grid gap-1.5"
-                style={{ gridTemplateColumns: "repeat(10, minmax(0, 1fr))" }}
-              >
-                {last30.map((day) => {
-                  const key = format(day, "yyyy-MM-dd");
-                  return (
-                    <div
-                      key={key}
-                      title={key}
-                      className={cn(
-                        "aspect-square rounded-md",
-                        partnerSessionDates.has(key)
-                          ? "bg-primary/70"
-                          : "bg-muted/60",
-                      )}
-                    />
-                  );
-                })}
-              </div>
+              {partnerSharedNotes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  {tf("bible.emptyPartner", language, { name: partnerName })}
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {partnerSharedNotes.map((n) => (
+                    <li
+                      key={n.id}
+                      className="rounded-xl border border-border bg-card p-3"
+                    >
+                      <p className="text-xs text-primary">
+                        {language === "mm" ? n.book_name_mm : n.book_name_en}{" "}
+                        {n.chapter}:{n.verse_start}–{n.verse_end}
+                      </p>
+                      <p className="mt-1 line-clamp-3 text-sm">{n.reflection}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {format(new Date(n.created_at), "MMM d, yyyy")}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-
-            <div className="grid gap-5 lg:grid-cols-2">
-              <div>
-                <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-                  {tf("bible.sharedNotesBy", language, { name: partnerName })}
-                </h3>
-                {partnerSharedNotes.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    {tf("bible.emptyPartner", language, { name: partnerName })}
-                  </p>
-                ) : (
-                  <ul className="space-y-2">
-                    {partnerSharedNotes.map((n) => (
-                      <li
-                        key={n.id}
-                        className="rounded-xl border border-border bg-card p-3"
+            <div>
+              <h3 className="mb-2 text-sm font-medium text-muted-foreground">
+                {tf("bible.sharedFavoritesBy", language, { name: partnerName })}
+              </h3>
+              {partnerSharedFavorites.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("common.empty", language)}
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {partnerSharedFavorites.map((f) => (
+                    <li key={f.id}>
+                      <button
+                        type="button"
+                        className="w-full rounded-xl border border-border bg-card p-3 text-left"
+                        onClick={() => openFavorite(f)}
                       >
                         <p className="text-xs text-primary">
-                          {language === "mm" ? n.book_name_mm : n.book_name_en}{" "}
-                          {n.chapter}:{n.verse_start}–{n.verse_end}
+                          {language === "mm" ? f.book_name_mm : f.book_name_en}{" "}
+                          {f.chapter}:{f.verse}
+                          {f.kind === "favorite" ? " ♥" : ""}
                         </p>
-                        <p className="mt-1 line-clamp-3 text-sm">{n.reflection}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {format(new Date(n.created_at), "MMM d, yyyy")}
+                        <p className="mt-1 line-clamp-3 text-sm">
+                          {favoriteSnippet(f)}
                         </p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div>
-                <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-                  {tf("bible.sharedFavoritesBy", language, { name: partnerName })}
-                </h3>
-                {partnerSharedFavorites.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    {t("common.empty", language)}
-                  </p>
-                ) : (
-                  <ul className="space-y-2">
-                    {partnerSharedFavorites.map((f) => (
-                      <li key={f.id}>
-                        <button
-                          type="button"
-                          className="w-full rounded-xl border border-border bg-card p-3 text-left"
-                          onClick={() => openFavorite(f)}
-                        >
-                          <p className="text-xs text-primary">
-                            {language === "mm" ? f.book_name_mm : f.book_name_en}{" "}
-                            {f.chapter}:{f.verse}
-                            {f.kind === "favorite" ? " ♥" : ""}
-                          </p>
-                          <p className="mt-1 line-clamp-3 text-sm">
-                            {favoriteSnippet(f)}
-                          </p>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         </div>
