@@ -1,10 +1,4 @@
-import {
-  differenceInCalendarDays,
-  differenceInCalendarMonths,
-  differenceInCalendarYears,
-  format,
-  parseISO,
-} from "date-fns";
+import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { ANNIVERSARY_DATE } from "@/lib/config";
 
 const MM_DIGITS = ["၀", "၁", "၂", "၃", "၄", "၅", "၆", "၇", "၈", "၉"] as const;
@@ -43,9 +37,10 @@ export function getTogetherDuration(now = new Date()) {
     };
   }
 
-  // Completed monthly / yearly markers after the start date (start day itself = 0).
-  const monthsaries = Math.max(0, differenceInCalendarMonths(now, start));
-  const anniversaries = Math.max(0, differenceInCalendarYears(now, start));
+  // Completed markers only after the anniversary day-of-month / day-of-year.
+  // e.g. start Oct 14 → Nov 10 still 0 monthsaries; Nov 14 → 1.
+  const monthsaries = Math.max(0, years * 12 + months);
+  const anniversaries = Math.max(0, years);
 
   return {
     totalDays,

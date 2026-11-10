@@ -9,6 +9,7 @@ export function Modal({
   title,
   children,
   className,
+  bodyClassName,
   blur = false,
 }: {
   open: boolean;
@@ -16,6 +17,7 @@ export function Modal({
   title: string;
   children: React.ReactNode;
   className?: string;
+  bodyClassName?: string;
   blur?: boolean;
 }) {
   useEffect(() => {
@@ -45,16 +47,19 @@ export function Modal({
         aria-modal="true"
         aria-labelledby="modal-title"
         className={cn(
-          "relative z-10 w-full max-w-lg rounded-2xl border border-border bg-card p-5 shadow-xl",
+          "relative z-10 flex w-full max-w-lg flex-col rounded-2xl border border-border bg-card p-5 shadow-xl",
           blur &&
             "border-primary/20 bg-gradient-to-b from-card via-card to-primary/5 shadow-[0_0_48px_-12px_hsl(var(--primary)/0.45)]",
           className,
         )}
       >
-        <h2 id="modal-title" className="mb-4 text-lg font-semibold text-foreground">
+        <h2
+          id="modal-title"
+          className="mb-4 shrink-0 text-lg font-semibold text-foreground"
+        >
           {title}
         </h2>
-        {children}
+        <div className={cn("min-h-0", bodyClassName)}>{children}</div>
       </div>
     </div>
   );

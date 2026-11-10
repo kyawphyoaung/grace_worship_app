@@ -62,12 +62,16 @@ export function SongForm({
   song,
   sections,
   onClose,
+  onDelete,
+  deleting = false,
 }: {
   language: Language;
   userId: string;
   song: Song | null;
   sections: SongSection[];
   onClose: () => void;
+  onDelete?: () => void;
+  deleting?: boolean;
 }) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -92,6 +96,7 @@ export function SongForm({
   const [timeSignature, setTimeSignature] = useState<TimeSignature>(
     (song?.time_signature as TimeSignature | undefined) ?? "4/4",
   );
+  const [youtubeUrl, setYoutubeUrl] = useState(song?.youtube_url ?? "");
   const [tags, setTags] = useState((song?.tags ?? []).join(", "));
   const [drafts, setDrafts] = useState<DraftSection[]>(() =>
     song ? toDraft(sections) : [],
@@ -181,6 +186,7 @@ export function SongForm({
         bpm: bpmNum,
         tempo: resolvedTempo,
         time_signature: timeSignature,
+        youtube_url: youtubeUrl.trim() || null,
         tags: tagList,
       };
 
@@ -275,6 +281,18 @@ export function SongForm({
           />
         </div>
 
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label htmlFor="youtube">{t("worship.youtubeLink", language)}</Label>
+          <Input
+            id="youtube"
+            type="url"
+            value={youtubeUrl}
+            onChange={(e) => setYoutubeUrl(e.target.value)}
+            className="min-h-11"
+            placeholder="https://youtube.com/watch?v=…"
+          />
+        </div>
+
         <PickerSheet
           label={t("worship.defaultKey", language)}
           value={defaultKey || "C"}
@@ -354,21 +372,6 @@ export function SongForm({
         <p className="text-xs text-muted-foreground">
           {t("worship.chordHint", language)}
         </p>
-        <div className="flex flex-wrap gap-2">
-          {SECTION_TYPES.map((type) => (
-            <Button
-              key={type}
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="min-h-10"
-              onClick={() => addSection(type)}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              {sectionTypeLabel(type)}
-            </Button>
-          ))}
-        </div>
 
         {drafts.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border/80 bg-muted/30 px-4 py-6 text-center text-sm text-muted-foreground">
@@ -452,7 +455,7 @@ export function SongForm({
                         songLang === "mm" && "mm-text",
                         "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                       )}
-                      placeholder="[C]If you miss the [Am]train…"
+                      placeholder="[C]If you miss the train…"
                     />
                   </div>
 
@@ -482,26 +485,57 @@ export function SongForm({
             })}
           </div>
         )}
+
+        <div className="flex flex-wrap gap-2">
+          {SECTION_TYPES.map((type) => (
+            <Button
+              key={type}
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="min-h-10"
+              onClick={() => addSection(type)}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {sectionTypeLabel(type)}
+            </Button>
+          ))}
+        </div>
       </div>
 
-      <div className="flex flex-wrap justify-end gap-2 border-t border-border/60 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          className="min-h-11"
-          onClick={onClose}
-          disabled={pending}
-        >
-          {t("common.cancel", language)}
-        </Button>
-        <Button
-          type="button"
-          className="min-h-11"
-          onClick={save}
-          disabled={pending}
-        >
-          {pending ? t("common.loading", language) : t("common.save", language)}
-        </Button>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-4">
+        <div>
+          {song && onDelete ? (
+            <Button
+              type="button"
+              variant="destructive"
+              className="min-h-11"
+              disabled={pending || deleting}
+              onClick={onDelete}
+            >
+              {t("common.delete", language)}
+            </Button>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11"
+            onClick={onClose}
+            disabled={pending || deleting}
+          >
+            {t("common.cancel", language)}
+          </Button>
+          <Button
+            type="button"
+            className="min-h-11"
+            onClick={save}
+            disabled={pending || deleting}
+          >
+            {pending ? t("common.loading", language) : t("common.save", language)}
+          </Button>
+        </div>
       </div>
     </div>
   );

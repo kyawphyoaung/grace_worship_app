@@ -1,11 +1,13 @@
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { Sidebar } from "@/components/shell/sidebar";
 import { NotificationBell } from "@/components/shell/notification-bell";
+import { PresenceNotifier } from "@/components/shell/presence-notifier";
 import { UserMenu } from "@/components/shell/user-menu";
 import { t, type Language } from "@/lib/i18n";
 import type { Profile } from "@/lib/auth/profile";
 import { CoupleProvider } from "@/components/couple-provider";
 import { ToastProvider } from "@/components/ui/toast";
+import { resolveDisplayName } from "@/lib/display-name";
 
 export function AppShell({
   children,
@@ -18,9 +20,17 @@ export function AppShell({
   me: Profile;
   partner: Profile;
 }) {
+  const myName = resolveDisplayName(me.id, me.display_name, "You");
+
   return (
     <CoupleProvider language={language} me={me} partner={partner}>
       <ToastProvider>
+        <PresenceNotifier
+          language={language}
+          userId={me.id}
+          myName={myName}
+          partnerId={partner.id}
+        />
         <div className="flex min-h-svh bg-background">
           <Sidebar language={language} />
           <div className="flex min-w-0 flex-1 flex-col">

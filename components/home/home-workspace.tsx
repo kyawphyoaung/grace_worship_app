@@ -143,17 +143,16 @@ export function HomeWorkspace({
               "radial-gradient(ellipse at 50% 0%, hsl(var(--primary) / 0.18), transparent 55%)",
           }}
         />
-        <div className="relative flex items-center justify-center gap-3 sm:gap-4">
+        <div className="relative flex items-center justify-center gap-4 sm:gap-5">
           <UserAvatar
             userId={me.id}
             displayName={myName}
             avatarUrl={me.avatar_url}
             size={72}
           />
-          <div className="flex items-center gap-1.5" aria-hidden>
-            <HeartIcon color="#8ba888" />
-            <HeartIcon color="#d4a574" />
-          </div>
+          <span className="animate-heart-pulse inline-flex" aria-hidden>
+            <HeartIcon color="#ef4444" />
+          </span>
           {partner ? (
             <UserAvatar
               userId={partner.id}

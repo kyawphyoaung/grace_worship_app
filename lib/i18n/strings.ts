@@ -52,6 +52,20 @@ export const strings = {
       mm: "အက်ပ် UI ဘာသာစကား (မီနူးနှင့် စာသားများ)။",
     },
     saved: { en: "Settings saved.", mm: "ဆက်တင်များ သိမ်းပြီးပါပြီ။" },
+    notifications: { en: "Notifications", mm: "အသိပေးချက်များ" },
+    notificationsHint: {
+      en: "Manage in-app notifications from your partner.",
+      mm: "အဖော်ထံမှ အက်ပ်အတွင်း အသိပေးချက်များကို စီမံပါ။",
+    },
+    deleteAll: { en: "Delete All", mm: "အားလုံး ဖျက်ရန်" },
+    deleteAllNotificationsConfirm: {
+      en: "Delete all notifications?",
+      mm: "အသိပေးချက်အားလုံးကို ဖျက်မလား?",
+    },
+    notificationsCleared: {
+      en: "All notifications deleted.",
+      mm: "အသိပေးချက်အားလုံး ဖျက်ပြီးပါပြီ။",
+    },
   },
   stubs: {
     comingSoon: {
@@ -100,6 +114,11 @@ export const strings = {
     titleEn: { en: "Title (EN)", mm: "ခေါင်းစဉ် (EN)" },
     titleMm: { en: "Title (MM)", mm: "ခေါင်းစဉ် (MM)" },
     author: { en: "Author", mm: "စာရေးသူ" },
+    youtubeLink: { en: "YouTube Link", mm: "YouTube လင့်ခ်" },
+    noSectionsYet: {
+      en: "No sections yet for this song.",
+      mm: "ဤသီချင်းအတွက် အပိုင်း မရှိသေးပါ။",
+    },
     defaultKey: { en: "Default key", mm: "မူလသော့" },
     tempoBpm: { en: "Tempo (BPM)", mm: "အရှိန် (BPM)" },
     tempo: { en: "Tempo", mm: "အရှိန်" },
@@ -385,6 +404,14 @@ export const strings = {
       mm: "အသည်းစွဲများ မရှိသေးပါ။ ကျမ်းပိုဒ်ကို ကြာကြာနှိပ်ပါ သို့မဟုတ် စာသားကို အရောင်ခြယ်ပါ။",
     },
     last30Days: { en: "Last 30 days", mm: "နောက်ဆုံး ၃၀ ရက်" },
+    invitePartner: {
+      en: "Invite {name} to Study",
+      mm: "{name} ကို လေ့လာရန် ဖိတ်ခေါ်ပါ",
+    },
+    inviteSent: {
+      en: "Invite sent.",
+      mm: "ဖိတ်ခေါ်ချက် ပို့ပြီးပါပြီ။",
+    },
   },
   prayer: {
     title: { en: "Prayer", mm: "ဆုတောင်း" },
@@ -500,6 +527,15 @@ export const strings = {
     title: { en: "Notifications", mm: "အသိပေးချက်များ" },
     empty: { en: "No notifications yet.", mm: "အသိပေးချက် မရှိသေးပါ။" },
     markAllRead: { en: "Mark all read", mm: "အားလုံး ဖတ်ပြီး" },
+    clearAll: { en: "Clear All", mm: "အားလုံး ရှင်းရန်" },
+    presenceOpened: {
+      en: "{name} just opened the app",
+      mm: "{name} က အက်ပ်ကို ဖွင့်လိုက်ပါပြီ",
+    },
+    bibleStudyInvite: {
+      en: "{name} invited you to study the Bible together",
+      mm: "{name} က သမ္မာကျမ်းစာ အတူလေ့လာရန် ဖိတ်ခေါ်ပါသည်",
+    },
   },
 } as const;
 

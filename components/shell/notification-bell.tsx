@@ -110,6 +110,15 @@ export function NotificationBell({
     });
   };
 
+  const openBell = () => {
+    const next = !open;
+    setOpen(next);
+    if (next) {
+      load();
+      markAllRead();
+    }
+  };
+
   const panel =
     open && mounted
       ? createPortal(
@@ -133,14 +142,14 @@ export function NotificationBell({
                 <p className="text-sm font-medium">
                   {t("notifications.title", language)}
                 </p>
-                {unread > 0 ? (
+                {rows.length > 0 ? (
                   <Button
                     variant="ghost"
                     className="h-8 px-2 text-xs"
                     disabled={pending}
                     onClick={markAllRead}
                   >
-                    {t("notifications.markAllRead", language)}
+                    {t("notifications.clearAll", language)}
                   </Button>
                 ) : null}
               </div>
@@ -208,10 +217,7 @@ export function NotificationBell({
         type="button"
         aria-label={t("notifications.title", language)}
         aria-expanded={open}
-        onClick={() => {
-          setOpen((v) => !v);
-          if (!open) load();
-        }}
+        onClick={openBell}
         className="relative flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-border bg-card text-foreground"
       >
         <Bell className="h-4 w-4" />

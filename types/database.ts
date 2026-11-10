@@ -758,6 +758,7 @@ export type Database = {
           title_mm: string | null
           updated_at: string
           user_id: string
+          youtube_url: string | null
         }
         Insert: {
           author?: string | null
@@ -774,6 +775,7 @@ export type Database = {
           title_mm?: string | null
           updated_at?: string
           user_id: string
+          youtube_url?: string | null
         }
         Update: {
           author?: string | null
@@ -790,6 +792,7 @@ export type Database = {
           title_mm?: string | null
           updated_at?: string
           user_id?: string
+          youtube_url?: string | null
         }
         Relationships: []
       }

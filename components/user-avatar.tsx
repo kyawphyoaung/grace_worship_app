@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { colorFromUserId, initialsFromName } from "@/lib/avatar-color";
+import { resolveAvatarUrl } from "@/lib/avatars";
 
 export function UserAvatar({
   userId,
@@ -18,6 +19,7 @@ export function UserAvatar({
 }) {
   const initials = initialsFromName(displayName);
   const bg = colorFromUserId(userId);
+  const src = resolveAvatarUrl(userId, avatarUrl);
 
   return (
     <span
@@ -28,9 +30,9 @@ export function UserAvatar({
       style={{ width: size, height: size }}
       title={displayName ?? undefined}
     >
-      {avatarUrl ? (
+      {src ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+        <img src={src} alt="" className="h-full w-full object-cover" />
       ) : (
         <span
           className="flex h-full w-full items-center justify-center font-semibold text-white"

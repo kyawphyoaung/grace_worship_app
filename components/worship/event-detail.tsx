@@ -110,10 +110,10 @@ export function EventDetail({
           <p className="mt-3 text-sm text-foreground/90">{event.notes}</p>
         ) : null}
 
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Button
             type="button"
-            className="min-h-11"
+            className="min-h-11 w-full"
             disabled={items.length === 0}
             onClick={() => setRehearsal(true)}
           >
@@ -123,7 +123,7 @@ export function EventDetail({
           <Button
             type="button"
             variant="secondary"
-            className="min-h-11"
+            className="min-h-11 w-full"
             disabled={items.length === 0}
             onClick={() => openPrint("original")}
           >
@@ -134,7 +134,7 @@ export function EventDetail({
             <Button
               type="button"
               variant="outline"
-              className="min-h-11"
+              className="min-h-11 w-full sm:col-span-2"
               disabled={items.length === 0}
               onClick={() => openPrint("override")}
             >

@@ -26,7 +26,7 @@ export function ChordLyrics({
   return (
     <div
       className={cn(
-        "space-y-1 font-mono text-[15px] leading-snug",
+        "w-full space-y-1 font-mono text-[15px] leading-snug",
         mm && "mm-text font-sans",
         className,
       )}

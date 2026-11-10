@@ -11,9 +11,10 @@
 - Phase 3 — Worship library, events, setlists, rehearsal preview, PDF export
 - Phase 3.1 — Chord transpose, PDF Myanmar font, worship UI overhaul (migration 009)
 - Phase 3.2 — HTML print export, event feed notifications, home upcoming events, feed deletions (migration 010)
+- Phase 3.3 — PDF print polish, song preview + YouTube, avatars, monthsary fix, notifications settings/presence/invite (migration 011)
 
 ## Next up
-- Apply migrations 008–010 (`supabase db push`) after owner review if not yet applied
+- Apply migrations 008–011 (`supabase db push`) after owner review if not yet applied
 - Phase 4 — Tracking, PWA, deploy
 
 ## Locked decisions
@@ -37,8 +38,8 @@
 npm run dev · npm run seed:bible · npm run seed:bible:chin · npm run seed:bible:kjv · supabase migration new \<n\> · supabase db push · supabase gen types typescript
 
 ## Tables
-profiles (+preferred_bible_languages), partners, bible_books (+name_chin), bible_verses (+text_chin, +text_kjv), bible_study_sessions, bible_study_notes, bible_favorites, prayers (+recipient_id), prayer_interactions, gratitude_entries (+recipient_id), notifications, feed_reactions, feed_comments, songs (+time_signature), song_sections (+pre_chorus), events, setlists, setlist_items, event_prayers, event_feedback, ministry_reflections
+profiles (+preferred_bible_languages), partners, bible_books (+name_chin), bible_verses (+text_chin, +text_kjv), bible_study_sessions, bible_study_notes, bible_favorites, prayers (+recipient_id), prayer_interactions, gratitude_entries (+recipient_id), notifications, feed_reactions, feed_comments, songs (+time_signature, +youtube_url), song_sections (+pre_chorus), events, setlists, setlist_items, event_prayers, event_feedback, ministry_reflections
 
 ## Migrations
-001–007 applied · 008–010 pending push after review
-(008 feed interactions · 009 worship pre_chorus/time_signature · 010 event feed notifications)
+001–007 applied · 008–011 pending push after review
+(008 feed interactions · 009 worship pre_chorus/time_signature · 010 event feed notifications · 011 youtube_url + presence/bible invite notifications)

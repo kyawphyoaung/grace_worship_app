@@ -718,11 +718,46 @@ export function BibleWorkspace({
     },
   ];
 
+  const invitePartner = () => {
+    if (!partner) return;
+    startTransition(async () => {
+      const supabase = createClient();
+      const { error } = await supabase.from("notifications").insert({
+        user_id: partner.id,
+        actor_id: me.id,
+        type: "bible_study_invite",
+        entity_type: "bible_study",
+        entity_id: me.id,
+        message: tf("notifications.bibleStudyInvite", language, {
+          name: myName,
+        }),
+      });
+      if (error) {
+        showToast(error.message);
+        return;
+      }
+      showToast(t("bible.inviteSent", language));
+    });
+  };
+
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <h1 className="text-3xl font-semibold tracking-tight">
-        {t("bible.title", language)}
-      </h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {t("bible.title", language)}
+        </h1>
+        {partner ? (
+          <Button
+            type="button"
+            variant="secondary"
+            className="min-h-11"
+            disabled={pending}
+            onClick={invitePartner}
+          >
+            {tf("bible.invitePartner", language, { name: partnerName })}
+          </Button>
+        ) : null}
+      </div>
 
       <Segmented value={tab} onChange={setTab} options={tabOptions} />
 

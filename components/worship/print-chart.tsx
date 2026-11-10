@@ -66,8 +66,8 @@ export function PrintChart({
         </div>
       </div>
 
-      <article className="print-chart mx-auto max-w-3xl px-5 py-8 text-foreground print:max-w-none print:px-0 print:py-0 print:text-black">
-        <header className="mb-8 border-b-2 border-primary pb-4 print:border-black">
+      <article className="print-chart mx-auto w-full max-w-3xl px-5 py-8 text-foreground print:max-w-none print:px-0 print:py-0 print:text-black">
+        <header className="print-chart-header mb-6 border-b-2 border-primary pb-4 print:mb-4 print:border-black">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary print:text-black">
             Grace · Worship Chart
           </p>
@@ -85,7 +85,7 @@ export function PrintChart({
           </p>
         </header>
 
-        <div className="space-y-10">
+        <div className="space-y-8 print:space-y-6">
           {items.map((item) => {
             const sections = [
               ...(sectionsBySong.get(item.song_id) ?? []),
@@ -106,7 +106,7 @@ export function PrintChart({
             return (
               <section
                 key={item.id}
-                className="break-inside-avoid space-y-4 border-b border-border/70 pb-8 print:border-neutral-300"
+                className="print-song break-inside-avoid space-y-3 border-b border-border/70 pb-6 print:border-neutral-300"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -131,13 +131,13 @@ export function PrintChart({
                 </div>
 
                 {sections.map((section) => (
-                  <div key={section.id} className="space-y-2">
+                  <div key={section.id} className="w-full space-y-2">
                     <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary print:text-black">
                       [{section.label || section.section_type}]
                     </p>
-                    <div className="grid gap-4 sm:grid-cols-2 print:grid-cols-2">
+                    <div className="print-lyrics grid w-full gap-4 sm:grid-cols-2 print:grid-cols-2">
                       {section.lyrics_mm ? (
-                        <div>
+                        <div className="w-full min-w-0">
                           <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-teal-600 print:text-neutral-600">
                             MM
                           </p>
@@ -146,12 +146,12 @@ export function PrintChart({
                             fromKey={fromKey}
                             toKey={toKey}
                             mm
-                            className="print-chords text-[15px] leading-relaxed text-foreground print:font-sans print:text-black"
+                            className="print-chords w-full text-[15px] leading-relaxed text-foreground print:font-sans print:text-black"
                           />
                         </div>
                       ) : null}
                       {section.lyrics_en ? (
-                        <div>
+                        <div className="w-full min-w-0">
                           <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-fuchsia-600 print:text-neutral-600">
                             EN
                           </p>
@@ -159,7 +159,7 @@ export function PrintChart({
                             lyrics={section.lyrics_en}
                             fromKey={fromKey}
                             toKey={toKey}
-                            className="print-chords text-[15px] leading-relaxed text-foreground print:text-black"
+                            className="print-chords w-full text-[15px] leading-relaxed text-foreground print:text-black"
                           />
                         </div>
                       ) : null}
