@@ -537,6 +537,41 @@ export const strings = {
       mm: "{name} က သမ္မာကျမ်းစာ အတူလေ့လာရန် ဖိတ်ခေါ်ပါသည်",
     },
   },
+  pwa: {
+    installTitle: {
+      en: "Install Grace on your Home Screen",
+      mm: "Grace ကို Home Screen တွင် ထည့်သွင်းပါ",
+    },
+    installHint: {
+      en: "Add Grace for quick access, like a native app.",
+      mm: "Grace ကို အက်ပ်ကဲ့သို့ အလွယ်တကူ ဖွင့်ရန် ထည့်သွင်းပါ။",
+    },
+    installHintIos: {
+      en: "On iPhone: tap Share, then Add to Home Screen.",
+      mm: "iPhone: Share ကိုနှိပ်ပြီး Add to Home Screen ရွေးပါ။",
+    },
+    installAction: { en: "Install Grace", mm: "Grace ထည့်သွင်းရန်" },
+    alreadyInstalled: {
+      en: "Grace is already installed on this device.",
+      mm: "Grace ကို ဤစက်တွင် ထည့်သွင်းပြီးပါပြီ။",
+    },
+    iosHelpTitle: {
+      en: "Add to Home Screen",
+      mm: "Home Screen သို့ ထည့်ရန်",
+    },
+    iosStep1: {
+      en: "Tap the Share button in Safari.",
+      mm: "Safari တွင် Share ခလုတ်ကို နှိပ်ပါ။",
+    },
+    iosStep2: {
+      en: "Scroll and choose Add to Home Screen.",
+      mm: "ဆင်းကြည့်ပြီး Add to Home Screen ကို ရွေးပါ။",
+    },
+    iosStep3: {
+      en: "Tap Add — Grace will appear on your Home Screen.",
+      mm: "Add ကိုနှိပ်ပါ — Grace သည် Home Screen တွင် ပေါ်လာမည်။",
+    },
+  },
 } as const;
 
 type Leaf = { readonly en: string; readonly mm: string };

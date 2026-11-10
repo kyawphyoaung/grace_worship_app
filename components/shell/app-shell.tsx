@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/shell/sidebar";
 import { NotificationBell } from "@/components/shell/notification-bell";
 import { PresenceNotifier } from "@/components/shell/presence-notifier";
 import { UserMenu } from "@/components/shell/user-menu";
+import { InstallBanner } from "@/components/pwa/install-prompt";
 import { t, type Language } from "@/lib/i18n";
 import type { Profile } from "@/lib/auth/profile";
 import { CoupleProvider } from "@/components/couple-provider";
@@ -51,6 +52,7 @@ export function AppShell({
             <main className="flex-1 px-4 pb-24 pt-6 md:px-8 md:pb-8">
               {children}
             </main>
+            <InstallBanner language={language} />
             <BottomNav language={language} />
           </div>
         </div>

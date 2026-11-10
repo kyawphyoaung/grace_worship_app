@@ -29,6 +29,7 @@ import {
   BIBLE_VERSION_BADGE,
   type BibleVersion,
 } from "@/lib/config";
+import { saveLastBibleChapter } from "@/lib/pwa/bible-cache";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database";
 
@@ -194,6 +195,27 @@ export function BibleWorkspace({
     setBookId(initialBookId ?? "");
     setChapter(initialChapter);
   }, [initialBookId, initialChapter]);
+
+  useEffect(() => {
+    if (!bookId || verses.length === 0) return;
+    const book = books.find((b) => b.id === bookId);
+    if (!book) return;
+    saveLastBibleChapter({
+      bookId,
+      chapter,
+      nameEn: book.name_en,
+      nameMm: book.name_mm,
+      nameChin: book.name_chin,
+      verses: verses.map((v) => ({
+        verse: v.verse,
+        text_mm: v.text_mm,
+        text_en: v.text_en,
+        text_chin: v.text_chin,
+        text_kjv: v.text_kjv,
+      })),
+      savedAt: new Date().toISOString(),
+    });
+  }, [bookId, chapter, verses, books]);
 
   useEffect(() => {
     if (initialVerse == null) return;

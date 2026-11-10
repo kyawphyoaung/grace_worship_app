@@ -12,10 +12,12 @@
 - Phase 3.1 — Chord transpose, PDF Myanmar font, worship UI overhaul (migration 009)
 - Phase 3.2 — HTML print export, event feed notifications, home upcoming events, feed deletions (migration 010)
 - Phase 3.3 — PDF print polish, song preview + YouTube, avatars, monthsary fix, notifications settings/presence/invite (migration 011)
+- Phase 4 — PWA (manifest, service worker, offline fallback, install prompt)
 
 ## Next up
 - Apply migrations 008–011 (`supabase db push`) after owner review if not yet applied
-- Phase 4 — Tracking, PWA, deploy
+- Replace placeholder `public/icons/icon-*.png` with final brand icons
+- Deploy / tracking polish as needed
 
 ## Locked decisions
 - App name: Grace · Vibrant peaceful dark (deep indigo/plum, teal primary, coral accent)

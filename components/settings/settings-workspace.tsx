@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { useCouple } from "@/components/couple-provider";
 import { UserAvatar } from "@/components/user-avatar";
 import { useToast } from "@/components/ui/toast";
+import { InstallSettingsCard } from "@/components/pwa/install-prompt";
 import type { Database } from "@/types/database";
 
 type Notification = Database["public"]["Tables"]["notifications"]["Row"];
@@ -166,6 +167,8 @@ export function SettingsWorkspace({
           {t("prayer.reminderHint", language)}
         </p>
       </section>
+
+      <InstallSettingsCard language={language} />
 
       <section className="space-y-3 rounded-2xl border border-border bg-card p-5">
         <div className="flex items-center justify-between gap-2">
