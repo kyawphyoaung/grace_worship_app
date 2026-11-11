@@ -168,9 +168,11 @@ export function NotificationBell({
                               {n.message}
                             </p>
                             <p className="mt-1 text-[11px] text-muted-foreground">
-                              {formatDistanceToNow(new Date(n.created_at), {
-                                addSuffix: true,
-                              })}
+                              {mounted
+                                ? formatDistanceToNow(new Date(n.created_at), {
+                                    addSuffix: true,
+                                  })
+                                : ""}
                             </p>
                           </div>
                           {!n.read_at ? (

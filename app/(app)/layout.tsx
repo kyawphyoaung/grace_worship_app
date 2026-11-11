@@ -19,6 +19,7 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // getCurrentUser() awaits connection() before JWT/session Date.now() checks.
   const { supabase, user } = await getCurrentUser();
 
   if (!user) {

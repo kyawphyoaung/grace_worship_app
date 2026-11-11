@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isBadDisplayName } from "@/lib/display-name";
 import type { Language } from "@/lib/i18n";
@@ -10,6 +11,10 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
 
 export async function getCurrentUser() {
+  // Supabase JWT/session validation uses Date.now(); Cache Components require
+  // request-time rendering before that (see Next.js connection()).
+  await connection();
+
   const supabase = await createClient();
   const {
     data: { user },
