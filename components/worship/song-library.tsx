@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Music2, Pencil, Plus, Search, Tag } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { Music2, Plus, Search, Tag } from "lucide-react";
+import { deleteSong } from "@/lib/actions/worship";
 import { t, type Language } from "@/lib/i18n";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
@@ -11,9 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { SongForm } from "@/components/worship/song-form";
-import { ChordLyrics } from "@/components/worship/chord-lyrics";
 import { songTimeSignature, songTitle } from "@/lib/worship/constants";
-import { youtubeEmbedUrl } from "@/lib/youtube";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database";
 
@@ -36,7 +35,6 @@ export function SongLibrary({
   const [pending, startTransition] = useTransition();
   const [query, setQuery] = useState("");
   const [tagFilter, setTagFilter] = useState<string | null>(null);
-  const [previewing, setPreviewing] = useState<Song | null>(null);
   const [editing, setEditing] = useState<Song | null | "new">(null);
 
   const allTags = useMemo(() => {
@@ -78,27 +76,16 @@ export function SongLibrary({
   const remove = (song: Song) => {
     if (!window.confirm(t("worship.deleteSongConfirm", language))) return;
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase.from("songs").delete().eq("id", song.id);
+      const { error } = await deleteSong(song.id);
       if (error) {
-        showToast(error.message);
+        showToast(error);
         return;
       }
       showToast(t("worship.songDeleted", language));
       setEditing(null);
-      setPreviewing(null);
       router.refresh();
     });
   };
-
-  const previewSections = previewing
-    ? [...(sectionsBySong.get(previewing.id) ?? [])].sort(
-        (a, b) => a.section_order - b.section_order,
-      )
-    : [];
-  const embedUrl = previewing
-    ? youtubeEmbedUrl(previewing.youtube_url)
-    : null;
 
   return (
     <div className="space-y-4">
@@ -174,10 +161,9 @@ export function SongLibrary({
                 : song.title_mm;
             return (
               <li key={song.id}>
-                <button
-                  type="button"
-                  onClick={() => setPreviewing(song)}
-                  className="card-glow w-full rounded-2xl border border-primary/15 p-4 text-left transition hover:border-primary/35"
+                <Link
+                  href={`/worship/songs/${song.id}`}
+                  className="card-glow block w-full rounded-2xl border border-primary/15 p-4 text-left transition hover:border-primary/35"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -223,133 +209,12 @@ export function SongLibrary({
                       {t("worship.sections", language).toLowerCase()}
                     </span>
                   </div>
-                </button>
+                </Link>
               </li>
             );
           })}
         </ul>
       )}
-
-      <Modal
-        open={previewing !== null}
-        onClose={() => setPreviewing(null)}
-        title={
-          previewing
-            ? songTitle(previewing, language === "mm" ? "mm" : "en")
-            : t("worship.preview", language)
-        }
-        className="max-h-[90vh] max-w-2xl overflow-hidden"
-        bodyClassName="flex min-h-0 flex-1 flex-col overflow-hidden"
-        blur
-      >
-        {previewing ? (
-          <>
-            {embedUrl ? (
-              <div className="sticky top-0 z-10 shrink-0 border-b border-border/60 bg-card/95 pb-3 backdrop-blur">
-                <div className="aspect-video w-full overflow-hidden rounded-xl border border-border/70 bg-black">
-                  <iframe
-                    src={embedUrl}
-                    title={songTitle(
-                      previewing,
-                      language === "mm" ? "mm" : "en",
-                    )}
-                    className="h-full w-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    referrerPolicy="strict-origin-when-cross-origin"
-                  />
-                </div>
-              </div>
-            ) : null}
-
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pt-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0 space-y-1">
-                  {previewing.author ? (
-                    <p className="text-sm text-muted-foreground">
-                      {previewing.author}
-                    </p>
-                  ) : null}
-                  <div className="flex flex-wrap gap-2 text-xs">
-                    {previewing.default_key ? (
-                      <Badge variant="secondary" className="font-normal">
-                        {t("worship.key", language)} {previewing.default_key}
-                      </Badge>
-                    ) : null}
-                    <Badge variant="outline" className="font-normal">
-                      {songTimeSignature(previewing)}
-                    </Badge>
-                    {previewing.bpm != null ? (
-                      <Badge variant="outline" className="font-normal">
-                        {previewing.bpm} {t("worship.bpm", language)}
-                      </Badge>
-                    ) : null}
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  className="min-h-11 shrink-0"
-                  onClick={() => {
-                    const song = previewing;
-                    setPreviewing(null);
-                    setEditing(song);
-                  }}
-                >
-                  <Pencil className="h-4 w-4" />
-                  {t("common.edit", language)}
-                </Button>
-              </div>
-
-              {previewSections.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-border/70 px-4 py-8 text-center text-sm text-muted-foreground">
-                  {t("worship.noSectionsYet", language)}
-                </p>
-              ) : (
-                previewSections.map((section) => (
-                  <div
-                    key={section.id}
-                    className="space-y-2 rounded-2xl border border-primary/15 bg-card/70 p-4"
-                  >
-                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                      [{section.label || section.section_type}]
-                    </p>
-                    <div className="grid w-full gap-4 sm:grid-cols-2">
-                      {section.lyrics_mm ? (
-                        <div className="w-full min-w-0">
-                          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-teal-400">
-                            MM
-                          </p>
-                          <ChordLyrics
-                            lyrics={section.lyrics_mm}
-                            mm
-                            className="w-full"
-                          />
-                        </div>
-                      ) : null}
-                      {section.lyrics_en ? (
-                        <div className="w-full min-w-0">
-                          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-fuchsia-400">
-                            EN
-                          </p>
-                          <ChordLyrics
-                            lyrics={section.lyrics_en}
-                            className="w-full"
-                          />
-                        </div>
-                      ) : null}
-                    </div>
-                    {section.notes ? (
-                      <p className="text-sm italic text-muted-foreground">
-                        {section.notes}
-                      </p>
-                    ) : null}
-                  </div>
-                ))
-              )}
-            </div>
-          </>
-        ) : null}
-      </Modal>
 
       <Modal
         open={editing !== null}

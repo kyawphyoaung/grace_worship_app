@@ -10,7 +10,7 @@ import {
   isSameDay,
   parseISO,
 } from "date-fns";
-import { createClient } from "@/lib/supabase/client";
+import { createGratitude } from "@/lib/actions/feed";
 import { t, tf, type Language } from "@/lib/i18n";
 import { Segmented } from "@/components/ui/segmented";
 import { Modal } from "@/components/ui/modal";
@@ -75,18 +75,17 @@ export function GratitudeWorkspace({
   const save = () => {
     if (!content.trim()) return;
     startTransition(async () => {
-      const supabase = createClient();
       const recipientId =
         toPartner && partner ? partner.id : null;
-      const { error } = await supabase.from("gratitude_entries").insert({
-        user_id: userId,
+      const { error } = await createGratitude({
+        userId,
         content: content.trim(),
-        entry_date: entryDate,
-        is_shared: toPartner || isShared,
-        recipient_id: recipientId,
+        entryDate,
+        isShared: toPartner || isShared,
+        recipientId,
       });
       if (error) {
-        setMessage(error.message);
+        setMessage(error);
         return;
       }
       setOpen(false);

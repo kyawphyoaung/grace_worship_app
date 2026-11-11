@@ -11,10 +11,17 @@ import {
 import { useRouter } from "next/navigation";
 import { format, eachDayOfInterval, subDays } from "date-fns";
 import { Flame, Heart, Search, UserRound } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import {
+  addFavorite,
+  invitePartner as invitePartnerAction,
+  markChapterRead as markChapterReadAction,
+  removeFavorite as removeFavoriteAction,
+  saveNote as saveNoteAction,
+  searchVerses,
+  updateBibleLanguages,
+} from "@/lib/actions/bible";
 import { t, tf, type Language } from "@/lib/i18n";
 import { computeStreaks } from "@/lib/streaks";
-import { bookMatchesQuery, parseBibleReference } from "@/lib/bible/reference";
 import { Segmented } from "@/components/ui/segmented";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -248,12 +255,8 @@ export function BibleWorkspace({
     if (next.length === 0) return;
     setVersions(next);
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("profiles")
-        .update({ preferred_bible_languages: next })
-        .eq("id", userId);
-      if (error) showToast(error.message);
+      const { error } = await updateBibleLanguages(userId, next);
+      if (error) showToast(error);
     });
   };
 
@@ -383,17 +386,15 @@ export function BibleWorkspace({
   const markChapterRead = () => {
     if (!bookId) return;
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase.from("bible_study_sessions").insert({
-        user_id: userId,
-        book_id: bookId,
+      const { error } = await markChapterReadAction({
+        userId,
+        bookId,
         chapter,
-        verses_read: verses.length,
-        completed: true,
-        session_date: format(new Date(), "yyyy-MM-dd"),
+        versesRead: verses.length,
+        sessionDate: format(new Date(), "yyyy-MM-dd"),
       });
       if (error) {
-        showToast(error.message);
+        showToast(error);
         return;
       }
       showToast(t("bible.markedRead", language));
@@ -427,18 +428,17 @@ export function BibleWorkspace({
       return;
     }
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase.from("bible_study_notes").insert({
-        user_id: userId,
-        book_id: bookId,
+      const { error } = await saveNoteAction({
+        userId,
+        bookId,
         chapter,
-        verse_start: rangeStart,
-        verse_end: rangeEnd,
+        verseStart: rangeStart,
+        verseEnd: rangeEnd,
         reflection: reflection.trim(),
-        is_shared: shareNote,
+        isShared: shareNote,
       });
       if (error) {
-        showToast(error.message);
+        showToast(error);
         return;
       }
       setNoteOpen(false);
@@ -460,24 +460,20 @@ export function BibleWorkspace({
         f.verse === verseNum,
     );
     startTransition(async () => {
-      const supabase = createClient();
       if (existing) {
-        const { error } = await supabase
-          .from("bible_favorites")
-          .delete()
-          .eq("id", existing.id);
-        if (error) showToast(error.message);
+        const { error } = await removeFavoriteAction(existing.id);
+        if (error) showToast(error);
       } else {
-        const { error } = await supabase.from("bible_favorites").insert({
-          user_id: userId,
-          book_id: bookId,
+        const { error } = await addFavorite({
+          userId,
+          bookId,
           chapter,
           verse: verseNum,
           kind: "favorite",
-          highlighted_text: null,
-          is_shared: false,
+          highlightedText: null,
+          isShared: false,
         });
-        if (error) showToast(error.message);
+        if (error) showToast(error);
       }
       router.refresh();
     });
@@ -486,17 +482,16 @@ export function BibleWorkspace({
   const saveHighlight = (verseNum: number, text: string, share: boolean) => {
     if (!bookId || !text.trim()) return;
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase.from("bible_favorites").insert({
-        user_id: userId,
-        book_id: bookId,
+      const { error } = await addFavorite({
+        userId,
+        bookId,
         chapter,
         verse: verseNum,
         kind: "highlight",
-        highlighted_text: text.trim(),
-        is_shared: share,
+        highlightedText: text.trim(),
+        isShared: share,
       });
-      if (error) showToast(error.message);
+      if (error) showToast(error);
       setSelectionBar(null);
       window.getSelection()?.removeAllRanges();
       router.refresh();
@@ -505,9 +500,8 @@ export function BibleWorkspace({
 
   const removeFavorite = (id: string) => {
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase.from("bible_favorites").delete().eq("id", id);
-      if (error) showToast(error.message);
+      const { error } = await removeFavoriteAction(id);
+      if (error) showToast(error);
       router.refresh();
     });
   };
@@ -534,57 +528,9 @@ export function BibleWorkspace({
     if (!q) return;
     setSearching(true);
     startTransition(async () => {
-      const supabase = createClient();
-      const parsed = parseBibleReference(q);
-      if (parsed) {
-        const matchedBook = books.find((b) =>
-          bookMatchesQuery(b, parsed.bookQuery),
-        );
-        if (matchedBook) {
-          let query = supabase
-            .from("bible_verses")
-            .select("*")
-            .eq("book_id", matchedBook.id)
-            .eq("chapter", parsed.chapter)
-            .order("verse");
-          if (parsed.verse) query = query.eq("verse", parsed.verse);
-          const { data } = await query;
-          setSearchResults(
-            (data ?? []).map((v) => ({
-              ...v,
-              book_name_en: matchedBook.name_en,
-              book_name_mm: matchedBook.name_mm,
-            })),
-          );
-          setSearching(false);
-          return;
-        }
-      }
-      const safe = q.replace(/[%_,]/g, " ").trim();
-      const { data } = await supabase
-        .from("bible_verses")
-        .select("*, bible_books(name_en, name_mm)")
-        .or(
-          `text_en.ilike.%${safe}%,text_mm.ilike.%${safe}%,text_chin.ilike.%${safe}%,text_kjv.ilike.%${safe}%`,
-        )
-        .limit(40);
-      type Row = Verse & {
-        bible_books: { name_en: string; name_mm: string } | null;
-      };
-      setSearchResults(
-        ((data ?? []) as unknown as Row[]).map((row) => ({
-          id: row.id,
-          book_id: row.book_id,
-          chapter: row.chapter,
-          verse: row.verse,
-          text_en: row.text_en,
-          text_mm: row.text_mm,
-          text_chin: row.text_chin,
-          text_kjv: row.text_kjv,
-          book_name_en: row.bible_books?.name_en ?? "",
-          book_name_mm: row.bible_books?.name_mm ?? "",
-        })),
-      );
+      const { error, results } = await searchVerses(q);
+      if (error) showToast(error);
+      setSearchResults(results);
       setSearching(false);
     });
   };
@@ -743,19 +689,15 @@ export function BibleWorkspace({
   const invitePartner = () => {
     if (!partner) return;
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase.from("notifications").insert({
-        user_id: partner.id,
-        actor_id: me.id,
-        type: "bible_study_invite",
-        entity_type: "bible_study",
-        entity_id: me.id,
+      const { error } = await invitePartnerAction({
+        partnerId: partner.id,
+        actorId: me.id,
         message: tf("notifications.bibleStudyInvite", language, {
           name: myName,
         }),
       });
       if (error) {
-        showToast(error.message);
+        showToast(error);
         return;
       }
       showToast(t("bible.inviteSent", language));

@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import { updateProfile } from "@/lib/actions/settings";
 import { t, type Language } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -23,11 +23,9 @@ export function LanguageToggle({
     if (next === current || pending) return;
     setCurrent(next);
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("profiles")
-        .update({ preferred_language: next })
-        .eq("id", userId);
+      const { error } = await updateProfile(userId, {
+        preferred_language: next,
+      });
       if (error) {
         setCurrent(language);
         return;

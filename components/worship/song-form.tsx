@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { saveSong } from "@/lib/actions/worship";
 import { t, type Language } from "@/lib/i18n";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
@@ -169,7 +169,6 @@ export function SongForm({
       return;
     }
     startTransition(async () => {
-      const supabase = createClient();
       const bpmNum = bpm.trim() ? Number(bpm) : null;
       const resolvedTempo = tempo || tempoFromBpm(bpmNum) || null;
       const tagList = tags
@@ -177,58 +176,31 @@ export function SongForm({
         .map((x) => x.trim())
         .filter(Boolean);
 
-      let songId = song?.id;
-      const payload = {
-        title_en: titleEn.trim() || null,
-        title_mm: titleMm.trim() || null,
-        author: author.trim() || null,
-        default_key: defaultKey || null,
-        bpm: bpmNum,
-        tempo: resolvedTempo,
-        time_signature: timeSignature,
-        youtube_url: youtubeUrl.trim() || null,
-        tags: tagList,
-      };
-
-      if (songId) {
-        const { error } = await supabase
-          .from("songs")
-          .update(payload)
-          .eq("id", songId);
-        if (error) {
-          showToast(error.message);
-          return;
-        }
-        await supabase.from("song_sections").delete().eq("song_id", songId);
-      } else {
-        const { data, error } = await supabase
-          .from("songs")
-          .insert({ user_id: userId, ...payload })
-          .select("id")
-          .single();
-        if (error || !data) {
-          showToast(error?.message ?? "Failed to save");
-          return;
-        }
-        songId = data.id;
-      }
-
-      if (drafts.length > 0) {
-        const { error: secErr } = await supabase.from("song_sections").insert(
-          drafts.map((d, i) => ({
-            song_id: songId!,
-            section_type: d.section_type,
-            section_order: i + 1,
-            label: d.label.trim() || null,
-            lyrics_mm: d.lyrics_mm.trim() || null,
-            lyrics_en: d.lyrics_en.trim() || null,
-            notes: d.notes.trim() || null,
-          })),
-        );
-        if (secErr) {
-          showToast(secErr.message);
-          return;
-        }
+      const { error } = await saveSong({
+        userId,
+        songId: song?.id ?? null,
+        song: {
+          title_en: titleEn.trim() || null,
+          title_mm: titleMm.trim() || null,
+          author: author.trim() || null,
+          default_key: defaultKey || null,
+          bpm: bpmNum,
+          tempo: resolvedTempo,
+          time_signature: timeSignature,
+          youtube_url: youtubeUrl.trim() || null,
+          tags: tagList,
+        },
+        sections: drafts.map((d) => ({
+          section_type: d.section_type,
+          label: d.label.trim() || null,
+          lyrics_mm: d.lyrics_mm.trim() || null,
+          lyrics_en: d.lyrics_en.trim() || null,
+          notes: d.notes.trim() || null,
+        })),
+      });
+      if (error) {
+        showToast(error);
+        return;
       }
 
       showToast(t("worship.songSaved", language));

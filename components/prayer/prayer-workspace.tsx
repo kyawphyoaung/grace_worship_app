@@ -4,7 +4,13 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { ListFilter } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import {
+  addPrayerInteraction,
+  createPrayer,
+  markPrayerAnswered,
+  updatePrayer,
+} from "@/lib/actions/feed";
+import { updateProfile } from "@/lib/actions/settings";
 import { t, tf, type Language } from "@/lib/i18n";
 import { Segmented } from "@/components/ui/segmented";
 import { Modal } from "@/components/ui/modal";
@@ -136,31 +142,27 @@ export function PrayerWorkspace({
   const savePrayer = () => {
     if (!title.trim() || !content.trim()) return;
     startTransition(async () => {
-      const supabase = createClient();
       if (editing) {
-        const { error } = await supabase
-          .from("prayers")
-          .update({
-            title: title.trim(),
-            content: content.trim(),
-            is_shared: isShared,
-          })
-          .eq("id", editing.id)
-          .eq("user_id", userId);
+        const { error } = await updatePrayer({
+          id: editing.id,
+          userId,
+          title: title.trim(),
+          content: content.trim(),
+          isShared: isShared,
+        });
         if (error) {
-          setMessage(error.message);
+          setMessage(error);
           return;
         }
       } else {
-        const { error } = await supabase.from("prayers").insert({
-          user_id: userId,
+        const { error } = await createPrayer({
+          userId,
           title: title.trim(),
           content: content.trim(),
-          is_shared: isShared,
-          status: "pending",
+          isShared: isShared,
         });
         if (error) {
-          setMessage(error.message);
+          setMessage(error);
           return;
         }
       }
@@ -172,18 +174,14 @@ export function PrayerWorkspace({
   const markAnswered = () => {
     if (!answeredPrayer) return;
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("prayers")
-        .update({
-          status: "answered",
-          answered_at: answeredAt,
-          testimony: testimony.trim() || null,
-        })
-        .eq("id", answeredPrayer.id)
-        .eq("user_id", userId);
+      const { error } = await markPrayerAnswered({
+        id: answeredPrayer.id,
+        userId,
+        answeredAt,
+        testimony: testimony.trim() || null,
+      });
       if (error) {
-        setMessage(error.message);
+        setMessage(error);
         return;
       }
       setAnsweredOpen(false);
@@ -195,16 +193,14 @@ export function PrayerWorkspace({
   const savePrayFor = () => {
     if (!prayPrayer) return;
     startTransition(async () => {
-      const supabase = createClient();
       const note = prayNote.trim();
-      const { error } = await supabase.from("prayer_interactions").insert({
-        prayer_id: prayPrayer.id,
-        user_id: userId,
-        interaction_type: "prayed_for",
+      const { error } = await addPrayerInteraction({
+        prayerId: prayPrayer.id,
+        userId,
         note: note || null,
       });
       if (error) {
-        setMessage(error.message);
+        setMessage(error);
         return;
       }
       setPrayOpen(false);
@@ -215,13 +211,11 @@ export function PrayerWorkspace({
 
   const saveReminder = () => {
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("profiles")
-        .update({ prayer_reminder_time: `${reminder}:00` })
-        .eq("id", userId);
+      const { error } = await updateProfile(userId, {
+        prayer_reminder_time: `${reminder}:00`,
+      });
       if (error) {
-        setMessage(error.message);
+        setMessage(error);
         return;
       }
       setMessage(t("prayer.reminderHint", language));

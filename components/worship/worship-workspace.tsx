@@ -23,6 +23,7 @@ export function WorshipWorkspace({
   language,
   userId,
   initialEventId = null,
+  initialLibraryOpen = false,
   songs,
   sections,
   events,
@@ -35,6 +36,7 @@ export function WorshipWorkspace({
   language: Language;
   userId: string;
   initialEventId?: string | null;
+  initialLibraryOpen?: boolean;
   songs: Song[];
   sections: SongSection[];
   events: EventRow[];
@@ -44,7 +46,7 @@ export function WorshipWorkspace({
   feedback: EventFeedback[];
   reflections: MinistryReflection[];
 }) {
-  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(initialLibraryOpen);
   const [activeEventId, setActiveEventId] = useState<string | null>(
     initialEventId,
   );

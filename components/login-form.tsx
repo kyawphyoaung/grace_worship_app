@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
+import { login } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,23 +28,18 @@ export function LoginForm({
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const supabase = createClient();
     setIsLoading(true);
     setError(null);
 
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (signInError) throw signInError;
-      router.push("/home");
-      router.refresh();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
+    const { error: signInError } = await login(email, password);
+    if (signInError) {
+      setError(signInError);
       setIsLoading(false);
+      return;
     }
+    router.push("/home");
+    router.refresh();
+    setIsLoading(false);
   };
 
   return (

@@ -32,10 +32,10 @@ export function AppShell({
           myName={myName}
           partnerId={partner.id}
         />
-        <div className="flex min-h-svh bg-background">
+        <div className="flex min-h-dvh bg-background">
           <Sidebar language={language} />
           <div className="flex min-w-0 flex-1 flex-col">
-            <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border/80 bg-background/80 px-4 py-3 backdrop-blur-md md:px-8">
+            <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border/80 bg-background/80 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md md:px-8">
               <div className="min-w-0">
                 <p className="bg-gradient-to-r from-primary via-fuchsia-300 to-accent bg-clip-text text-xs font-semibold uppercase tracking-[0.2em] text-transparent md:hidden">
                   {t("appName", language)}

@@ -4,7 +4,12 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import {
+  deleteAllNotifications,
+  deleteNotification,
+  listNotifications,
+} from "@/lib/actions/notifications";
+import { updateProfile } from "@/lib/actions/settings";
 import { t, type Language } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/language-toggle";
 import { Button } from "@/components/ui/button";
@@ -39,14 +44,8 @@ export function SettingsWorkspace({
 
   const loadNotifications = () => {
     startTransition(async () => {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from("notifications")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(100);
-      setNotifications(data ?? []);
+      const { notifications: rows } = await listNotifications(userId, 100);
+      setNotifications(rows);
     });
   };
 
@@ -57,16 +56,12 @@ export function SettingsWorkspace({
 
   const save = () => {
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          display_name: name.trim() || null,
-          prayer_reminder_time: `${reminder}:00`,
-        })
-        .eq("id", userId);
+      const { error } = await updateProfile(userId, {
+        display_name: name.trim() || null,
+        prayer_reminder_time: `${reminder}:00`,
+      });
       if (error) {
-        setMessage(error.message);
+        setMessage(error);
         return;
       }
       setMessage(t("settings.saved", language));
@@ -76,14 +71,9 @@ export function SettingsWorkspace({
 
   const deleteOne = (id: string) => {
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("notifications")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", userId);
+      const { error } = await deleteNotification(id, userId);
       if (error) {
-        showToast(error.message);
+        showToast(error);
         return;
       }
       setNotifications((prev) => prev.filter((n) => n.id !== id));
@@ -95,13 +85,9 @@ export function SettingsWorkspace({
       return;
     }
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("notifications")
-        .delete()
-        .eq("user_id", userId);
+      const { error } = await deleteAllNotifications(userId);
       if (error) {
-        showToast(error.message);
+        showToast(error);
         return;
       }
       setNotifications([]);

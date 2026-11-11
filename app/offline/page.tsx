@@ -19,7 +19,7 @@ export default function OfflinePage() {
   }, []);
 
   return (
-    <div className="mx-auto flex min-h-svh max-w-2xl flex-col px-4 py-10">
+    <div className="mx-auto flex min-h-dvh max-w-2xl flex-col px-4 py-10 pt-[max(2.5rem,env(safe-area-inset-top))]">
       <div className="mb-8 rounded-3xl border border-border bg-card/80 p-6 text-center shadow-[0_0_40px_-18px_hsl(var(--primary)/0.45)]">
         <WifiOff className="mx-auto h-8 w-8 text-primary" />
         <h1 className="mt-3 text-2xl font-semibold tracking-tight">

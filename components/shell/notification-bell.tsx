@@ -4,7 +4,11 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { Bell } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { createClient } from "@/lib/supabase/client";
+import {
+  listNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "@/lib/actions/notifications";
 import { t, type Language } from "@/lib/i18n";
 import { useCouple } from "@/components/couple-provider";
 import { UserAvatar } from "@/components/user-avatar";
@@ -15,6 +19,8 @@ import type { Database } from "@/types/database";
 
 type Notification = Database["public"]["Tables"]["notifications"]["Row"];
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+
+const POLL_MS = 20_000;
 
 export function NotificationBell({
   language,
@@ -35,37 +41,18 @@ export function NotificationBell({
 
   const load = () => {
     startTransition(async () => {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from("notifications")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      setRows(data ?? []);
+      const { notifications } = await listNotifications(userId, 20);
+      setRows(notifications);
     });
   };
 
   useEffect(() => {
     load();
-    const supabase = createClient();
-    const channel = supabase
-      .channel(`notifications:${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${userId}`,
-        },
-        () => {
-          load();
-        },
-      )
-      .subscribe();
+    const timer = window.setInterval(() => {
+      load();
+    }, POLL_MS);
     return () => {
-      void supabase.removeChannel(channel);
+      window.clearInterval(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load on mount / user change only
   }, [userId]);
@@ -82,30 +69,20 @@ export function NotificationBell({
 
   const markAllRead = () => {
     startTransition(async () => {
-      const supabase = createClient();
-      const now = new Date().toISOString();
-      await supabase
-        .from("notifications")
-        .update({ read_at: now })
-        .eq("user_id", userId)
-        .is("read_at", null);
+      const { readAt } = await markAllNotificationsRead(userId);
+      if (!readAt) return;
       setRows((prev) =>
-        prev.map((r) => (r.read_at ? r : { ...r, read_at: now })),
+        prev.map((r) => (r.read_at ? r : { ...r, read_at: readAt })),
       );
     });
   };
 
   const markOneRead = (id: string) => {
     startTransition(async () => {
-      const supabase = createClient();
-      const now = new Date().toISOString();
-      await supabase
-        .from("notifications")
-        .update({ read_at: now })
-        .eq("id", id)
-        .eq("user_id", userId);
+      const { readAt } = await markNotificationRead(id, userId);
+      if (!readAt) return;
       setRows((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, read_at: now } : r)),
+        prev.map((r) => (r.id === id ? { ...r, read_at: readAt } : r)),
       );
     });
   };

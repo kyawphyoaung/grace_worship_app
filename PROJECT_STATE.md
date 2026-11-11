@@ -13,11 +13,17 @@
 - Phase 3.2 — HTML print export, event feed notifications, home upcoming events, feed deletions (migration 010)
 - Phase 3.3 — PDF print polish, song preview + YouTube, avatars, monthsary fix, notifications settings/presence/invite (migration 011)
 - Phase 4 — PWA (manifest, service worker, offline fallback, install prompt)
+- Phase 4.1 — Server Actions (DNS bypass), safe-area/dvh, loading skeletons, song preview page, Judson MM seed
 
 ## Next up
 - Apply migrations 008–011 (`supabase db push`) after owner review if not yet applied
 - Replace placeholder `public/icons/icon-*.png` with final brand icons
-- Deploy / tracking polish as needed
+- Run `npm run seed:bible:judson` after migrations (updates `bible_verses.text_mm`)
+- Deploy
+
+## PWA / network notes
+- Browser Supabase client disabled — all auth/data via `lib/actions/*` + `@supabase/ssr` server cookies (avoids ISP `*.supabase.co` DNS block)
+- Notifications poll every 20s (no realtime channel to supabase.co)
 
 ## Locked decisions
 - App name: Grace · Vibrant peaceful dark (deep indigo/plum, teal primary, coral accent)

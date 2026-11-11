@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { sendPresenceNotification } from "@/lib/actions/notifications";
 import { tf, type Language } from "@/lib/i18n";
 
 const SESSION_KEY = "grace:presence-notified";
@@ -31,13 +31,9 @@ export function PresenceNotifier({
     sent.current = true;
 
     const run = async () => {
-      const supabase = createClient();
-      const { error } = await supabase.from("notifications").insert({
-        user_id: partnerId,
-        actor_id: userId,
-        type: "presence_opened",
-        entity_type: "presence",
-        entity_id: userId,
+      const { error } = await sendPresenceNotification({
+        partnerId,
+        userId,
         message: tf("notifications.presenceOpened", language, {
           name: myName,
         }),

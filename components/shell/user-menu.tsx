@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogOut, Settings } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { logout as logoutAction } from "@/lib/actions/auth";
 import { t, type Language } from "@/lib/i18n";
 import { UserAvatar } from "@/components/user-avatar";
 import {
@@ -26,8 +26,7 @@ export function UserMenu({
   const myName = resolveDisplayName(me.id, me.display_name);
 
   const logout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await logoutAction();
     router.push("/auth/login");
     router.refresh();
   };

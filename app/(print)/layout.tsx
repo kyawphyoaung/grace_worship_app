@@ -35,7 +35,7 @@ export default async function PrintLayout({
       me={profile}
       partner={partnerProfile}
     >
-      <div className="min-h-svh bg-background text-foreground">{children}</div>
+      <div className="min-h-dvh bg-background text-foreground">{children}</div>
     </CoupleProvider>
   );
 }

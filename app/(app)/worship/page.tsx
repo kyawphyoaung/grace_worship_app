@@ -11,14 +11,16 @@ export const instant = false;
 export default async function WorshipPage({
   searchParams,
 }: {
-  searchParams: Promise<{ event?: string }>;
+  searchParams: Promise<{ event?: string; library?: string }>;
 }) {
-  const { event: eventParam } = await searchParams;
+  const { event: eventParam, library: libraryParam } = await searchParams;
   const { supabase, user } = await getCurrentUser();
   if (!user) redirect("/auth/login");
 
   const profile = await ensureProfile(supabase, user.id, user.email);
   const language = profileLanguage(profile);
+  const libraryOpen =
+    libraryParam === "1" || libraryParam === "true" || libraryParam === "yes";
 
   const [
     { data: songs },
@@ -57,6 +59,7 @@ export default async function WorshipPage({
       language={language}
       userId={user.id}
       initialEventId={eventParam ?? null}
+      initialLibraryOpen={libraryOpen}
       songs={songs ?? []}
       sections={sections ?? []}
       events={events ?? []}

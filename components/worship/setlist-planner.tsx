@@ -21,7 +21,13 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Pencil, Plus, Search, Trash2, X } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import {
+  addSetlistItem,
+  ensureSetlist,
+  removeSetlistItem,
+  reorderSetlistItems,
+  updateSetlistItem,
+} from "@/lib/actions/worship";
 import { t, type Language } from "@/lib/i18n";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
@@ -172,37 +178,21 @@ export function SetlistPlanner({
     }),
   );
 
-  const ensureSetlist = async () => {
-    if (setlist) return setlist.id;
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("setlists")
-      .insert({ event_id: eventId, user_id: userId })
-      .select("*")
-      .single();
-    if (error || !data)
-      throw new Error(error?.message ?? "Failed to create setlist");
-    return data.id;
-  };
-
-  const persistOrder = async (ordered: SetlistItemView[]) => {
-    const supabase = createClient();
-    await Promise.all(
-      ordered.map((item, idx) =>
-        supabase
-          .from("setlist_items")
-          .update({ position: 1000 + idx + 1 })
-          .eq("id", item.id),
-      ),
-    );
-    await Promise.all(
-      ordered.map((item, idx) =>
-        supabase
-          .from("setlist_items")
-          .update({ position: idx + 1 })
-          .eq("id", item.id),
-      ),
-    );
+  const resolveSetlistId = async (): Promise<
+    { setlistId: string; error: null } | { setlistId: null; error: string }
+  > => {
+    if (setlist) return { setlistId: setlist.id, error: null };
+    const { error, setlist: created } = await ensureSetlist({
+      eventId,
+      userId,
+    });
+    if (error || !created) {
+      return {
+        setlistId: null,
+        error: error ?? "Failed to create setlist",
+      };
+    }
+    return { setlistId: created.id, error: null };
   };
 
   const onDragEnd = (event: DragEndEvent) => {
@@ -217,36 +207,35 @@ export function SetlistPlanner({
     }));
     setLocalItems(next);
     startTransition(async () => {
-      try {
-        await persistOrder(next);
-        router.refresh();
-      } catch (err) {
-        showToast(err instanceof Error ? err.message : "Reorder failed");
+      const { error } = await reorderSetlistItems(next.map((item) => item.id));
+      if (error) {
+        showToast(error);
+        return;
       }
+      router.refresh();
     });
   };
 
   const addSong = (song: Song) => {
     startTransition(async () => {
-      try {
-        const supabase = createClient();
-        const setlistId = await ensureSetlist();
-        const position = localItems.length + 1;
-        const { error } = await supabase.from("setlist_items").insert({
-          setlist_id: setlistId,
-          song_id: song.id,
-          position,
-        });
-        if (error) {
-          showToast(error.message);
-          return;
-        }
-        setPickerOpen(false);
-        setQuery("");
-        router.refresh();
-      } catch (err) {
-        showToast(err instanceof Error ? err.message : "Failed to add");
+      const resolved = await resolveSetlistId();
+      if (resolved.error || !resolved.setlistId) {
+        showToast(resolved.error ?? "Failed to add");
+        return;
       }
+      const position = localItems.length + 1;
+      const { error } = await addSetlistItem({
+        setlistId: resolved.setlistId,
+        songId: song.id,
+        position,
+      });
+      if (error) {
+        showToast(error);
+        return;
+      }
+      setPickerOpen(false);
+      setQuery("");
+      router.refresh();
     });
   };
 
@@ -272,32 +261,36 @@ export function SetlistPlanner({
     );
     setEditing(null);
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("setlist_items")
-        .update(patch)
-        .eq("id", editing.id);
-      if (error) showToast(error.message);
+      const { error } = await updateSetlistItem({
+        id: editing.id,
+        keyOverride: patch.key_override,
+        transitionNote: patch.transition_note,
+      });
+      if (error) showToast(error);
       else router.refresh();
     });
   };
 
   const removeItem = (id: string) => {
     startTransition(async () => {
-      const supabase = createClient();
       const remaining = localItems
         .filter((i) => i.id !== id)
         .map((item, idx) => ({ ...item, position: idx + 1 }));
       setLocalItems(remaining);
-      const { error } = await supabase
-        .from("setlist_items")
-        .delete()
-        .eq("id", id);
+      const { error } = await removeSetlistItem(id);
       if (error) {
-        showToast(error.message);
+        showToast(error);
         return;
       }
-      if (remaining.length > 0) await persistOrder(remaining);
+      if (remaining.length > 0) {
+        const { error: orderError } = await reorderSetlistItems(
+          remaining.map((item) => item.id),
+        );
+        if (orderError) {
+          showToast(orderError);
+          return;
+        }
+      }
       router.refresh();
     });
   };

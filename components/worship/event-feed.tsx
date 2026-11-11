@@ -4,7 +4,12 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import {
+  createEventFeedback,
+  createEventPrayer,
+  deleteEventFeedPost,
+  saveMinistryReflection,
+} from "@/lib/actions/worship";
 import { t, type Language } from "@/lib/i18n";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
@@ -143,32 +148,13 @@ export function EventFeed({
     if (post.authorId !== userId) return;
     if (!window.confirm(t("feed.deletePostConfirm", language))) return;
     startTransition(async () => {
-      const supabase = createClient();
-      let errorMessage: string | null = null;
-      if (post.kind === "prayer") {
-        const { error } = await supabase
-          .from("event_prayers")
-          .delete()
-          .eq("id", post.id)
-          .eq("from_user_id", userId);
-        errorMessage = error?.message ?? null;
-      } else if (post.kind === "feedback") {
-        const { error } = await supabase
-          .from("event_feedback")
-          .delete()
-          .eq("id", post.id)
-          .eq("from_user_id", userId);
-        errorMessage = error?.message ?? null;
-      } else {
-        const { error } = await supabase
-          .from("ministry_reflections")
-          .delete()
-          .eq("id", post.id)
-          .eq("user_id", userId);
-        errorMessage = error?.message ?? null;
-      }
-      if (errorMessage) {
-        showToast(errorMessage);
+      const { error } = await deleteEventFeedPost({
+        kind: post.kind,
+        id: post.id,
+        userId,
+      });
+      if (error) {
+        showToast(error);
         return;
       }
       showToast(t("worship.saved", language));
@@ -201,50 +187,44 @@ export function EventFeed({
       return;
 
     startTransition(async () => {
-      const supabase = createClient();
       if (postKind === "prayer") {
         if (!canCreatePrayer) {
           showToast(t("worship.onlyPartnerPrayer", language));
           return;
         }
-        const { error } = await supabase.from("event_prayers").insert({
-          event_id: event.id,
-          from_user_id: userId,
+        const { error } = await createEventPrayer({
+          eventId: event.id,
+          fromUserId: userId,
           note: content.trim(),
         });
         if (error) {
-          showToast(error.message);
+          showToast(error);
           return;
         }
       } else if (postKind === "feedback") {
         if (!partner || !canCreateFeedback) return;
-        const { error } = await supabase.from("event_feedback").insert({
-          event_id: event.id,
-          from_user_id: userId,
-          to_user_id: event.user_id,
+        const { error } = await createEventFeedback({
+          eventId: event.id,
+          fromUserId: userId,
+          toUserId: event.user_id,
           note: content.trim(),
         });
         if (error) {
-          showToast(error.message);
+          showToast(error);
           return;
         }
       } else {
         const existing = reflections.find((r) => r.user_id === userId);
-        const payload = {
-          event_id: event.id,
-          user_id: userId,
-          post_service_reflection: content.trim() || null,
-          serving_gratitude: gratitude.trim() || null,
-          is_shared: shareReflection,
-        };
-        const { error } = existing
-          ? await supabase
-              .from("ministry_reflections")
-              .update(payload)
-              .eq("id", existing.id)
-          : await supabase.from("ministry_reflections").insert(payload);
+        const { error } = await saveMinistryReflection({
+          existingId: existing?.id ?? null,
+          eventId: event.id,
+          userId,
+          postServiceReflection: content.trim() || null,
+          servingGratitude: gratitude.trim() || null,
+          isShared: shareReflection,
+        });
         if (error) {
-          showToast(error.message);
+          showToast(error);
           return;
         }
       }

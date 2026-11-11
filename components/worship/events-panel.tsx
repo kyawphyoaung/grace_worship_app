@@ -13,7 +13,7 @@ import {
   subMonths,
 } from "date-fns";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { deleteEvent, saveEvent } from "@/lib/actions/worship";
 import { t, tf, type Language } from "@/lib/i18n";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
@@ -123,35 +123,20 @@ export function EventsPanel({
   const save = () => {
     if (!name.trim()) return;
     startTransition(async () => {
-      const supabase = createClient();
-      if (editing && editing !== "new") {
-        const { error } = await supabase
-          .from("events")
-          .update({
-            event_name: name.trim(),
-            event_date: date,
-            event_type: eventType,
-            role,
-            notes: notes.trim() || null,
-          })
-          .eq("id", editing.id);
-        if (error) {
-          showToast(error.message);
-          return;
-        }
-      } else {
-        const { error } = await supabase.from("events").insert({
-          user_id: userId,
+      const { error } = await saveEvent({
+        userId,
+        eventId: editing && editing !== "new" ? editing.id : null,
+        event: {
           event_name: name.trim(),
           event_date: date,
           event_type: eventType,
           role,
           notes: notes.trim() || null,
-        });
-        if (error) {
-          showToast(error.message);
-          return;
-        }
+        },
+      });
+      if (error) {
+        showToast(error);
+        return;
       }
       showToast(t("worship.eventSaved", language));
       setEditing(null);
@@ -162,10 +147,9 @@ export function EventsPanel({
   const remove = (event: EventRow) => {
     if (!window.confirm(t("worship.deleteEventConfirm", language))) return;
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase.from("events").delete().eq("id", event.id);
+      const { error } = await deleteEvent(event.id);
       if (error) {
-        showToast(error.message);
+        showToast(error);
         return;
       }
       showToast(t("worship.eventDeleted", language));

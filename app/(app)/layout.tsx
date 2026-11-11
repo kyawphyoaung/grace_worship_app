@@ -35,8 +35,8 @@ export default async function AppLayout({
 
   if (!linked) {
     return (
-      <div className="min-h-svh bg-background">
-        <div className="flex items-center justify-end gap-2 p-4">
+      <div className="min-h-dvh bg-background">
+        <div className="flex items-center justify-end gap-2 p-4 pt-[max(1rem,env(safe-area-inset-top))]">
           <LanguageToggle userId={user.id} language={language} />
           <LogoutButton label={t("auth.logout", language)} />
         </div>
@@ -52,8 +52,8 @@ export default async function AppLayout({
 
   if (!partnerProfile) {
     return (
-      <div className="min-h-svh bg-background">
-        <div className="flex items-center justify-end gap-2 p-4">
+      <div className="min-h-dvh bg-background">
+        <div className="flex items-center justify-end gap-2 p-4 pt-[max(1rem,env(safe-area-inset-top))]">
           <LanguageToggle userId={user.id} language={language} />
           <LogoutButton label={t("auth.logout", language)} />
         </div>

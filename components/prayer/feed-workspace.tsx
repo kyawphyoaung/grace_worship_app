@@ -4,7 +4,14 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { Heart, ListFilter, MessageCircle, Search, Send, Trash2, X } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import {
+  addFeedComment,
+  createGratitude,
+  createPrayer,
+  deleteGratitude,
+  deletePrayer,
+  toggleLoveReaction,
+} from "@/lib/actions/feed";
 import { t, tf, type Language } from "@/lib/i18n";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -153,17 +160,12 @@ export function FeedWorkspace({
   const deletePost = (kind: "prayer" | "gratitude", id: string) => {
     if (!window.confirm(t("feed.deletePostConfirm", language))) return;
     startTransition(async () => {
-      const supabase = createClient();
       const { error } =
         kind === "prayer"
-          ? await supabase.from("prayers").delete().eq("id", id).eq("user_id", userId)
-          : await supabase
-              .from("gratitude_entries")
-              .delete()
-              .eq("id", id)
-              .eq("user_id", userId);
+          ? await deletePrayer(id, userId)
+          : await deleteGratitude(id, userId);
       if (error) {
-        setMessage(error.message);
+        setMessage(error);
         return;
       }
       router.refresh();
@@ -184,30 +186,28 @@ export function FeedWorkspace({
     if (postType === "prayer" && !title.trim()) return;
 
     startTransition(async () => {
-      const supabase = createClient();
       if (postType === "prayer") {
         const targeted = prayForPartner && partnerId;
-        const { error } = await supabase.from("prayers").insert({
-          user_id: userId,
+        const { error } = await createPrayer({
+          userId,
           title: title.trim(),
           content: content.trim(),
-          is_shared: targeted ? true : shareWith,
-          recipient_id: targeted ? partnerId : null,
-          status: "pending",
+          isShared: targeted ? true : shareWith,
+          recipientId: targeted ? partnerId : null,
         });
         if (error) {
-          setMessage(error.message);
+          setMessage(error);
           return;
         }
       } else {
-        const { error } = await supabase.from("gratitude_entries").insert({
-          user_id: userId,
+        const { error } = await createGratitude({
+          userId,
           content: content.trim(),
-          is_shared: shareWith,
-          recipient_id: null,
+          isShared: shareWith,
+          recipientId: null,
         });
         if (error) {
-          setMessage(error.message);
+          setMessage(error);
           return;
         }
       }
@@ -237,22 +237,13 @@ export function FeedWorkspace({
     }, 900);
 
     startTransition(async () => {
-      const supabase = createClient();
-      if (existing) {
-        const { error } = await supabase
-          .from("feed_reactions")
-          .delete()
-          .eq("id", existing.id);
-        if (error) setMessage(error.message);
-      } else {
-        const { error } = await supabase.from("feed_reactions").insert({
-          user_id: userId,
-          entity_type: entityType,
-          entity_id: entityId,
-          reaction: "love",
-        });
-        if (error) setMessage(error.message);
-      }
+      const { error } = await toggleLoveReaction({
+        userId,
+        entityType,
+        entityId,
+        existingId: existing?.id ?? null,
+      });
+      if (error) setMessage(error);
       router.refresh();
     });
   };
@@ -265,15 +256,14 @@ export function FeedWorkspace({
     const text = (drafts[key] ?? "").trim();
     if (!text) return;
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase.from("feed_comments").insert({
-        user_id: userId,
-        entity_type: entityType,
-        entity_id: entityId,
+      const { error } = await addFeedComment({
+        userId,
+        entityType,
+        entityId,
         content: text,
       });
       if (error) {
-        setMessage(error.message);
+        setMessage(error);
         return;
       }
       setDrafts((prev) => ({ ...prev, [key]: "" }));
