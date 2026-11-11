@@ -7,7 +7,19 @@ export function toMyanmarDigits(n: number): string {
   return String(n).replace(/\d/g, (d) => MM_DIGITS[Number(d)] ?? d);
 }
 
-export function getTogetherDuration(now = new Date()) {
+export type TogetherDuration = {
+  totalDays: number;
+  years: number;
+  months: number;
+  days: number;
+  monthsaries: number;
+  anniversaries: number;
+  sinceLabelEn: string;
+  sinceLabelMm: string;
+};
+
+/** Pass an explicit `now` from the client after mount — never call during prerender. */
+export function getTogetherDuration(now: Date): TogetherDuration {
   const start = parseISO(ANNIVERSARY_DATE);
   const totalDays = Math.max(0, differenceInCalendarDays(now, start));
 

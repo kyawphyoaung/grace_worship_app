@@ -117,6 +117,36 @@ export async function deleteEvent(id: string): Promise<ActionResult> {
   return { error: error?.message ?? null };
 }
 
+export type UpcomingEventRow = {
+  id: string;
+  event_name: string;
+  event_date: string;
+  event_type: string;
+  role: string;
+};
+
+/** Uses request-time "today" — call from the client after mount only. */
+export async function listUpcomingEvents(
+  limit = 8,
+): Promise<{ events: UpcomingEventRow[]; error: string | null }> {
+  const supabase = await createClient();
+  const today = formatDateYmd(new Date());
+  const { data, error } = await supabase
+    .from("events")
+    .select("id, event_name, event_date, event_type, role")
+    .gte("event_date", today)
+    .order("event_date", { ascending: true })
+    .limit(limit);
+  return { events: data ?? [], error: error?.message ?? null };
+}
+
+function formatDateYmd(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export async function ensureSetlist(input: {
   eventId: string;
   userId: string;
